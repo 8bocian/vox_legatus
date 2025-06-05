@@ -3,12 +3,11 @@ from app.database import Base
 from app.enums import PollStatus
 
 
-class Vote(Base):
-    __tablename__ = "votes"
+class Voter(Base):
+    __tablename__ = "voters"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True, nullable=False)
     poll_id = Column(Integer, ForeignKey("polls.id"), index=True, nullable=False)
-    voter_id = Column(Integer, ForeignKey("voters.id"), index=True, nullable=False)
-    question_id = Column(Integer, ForeignKey("questions.id"), index=True, nullable=False)
-    answer_id = Column(Integer, ForeignKey("answers.id"), index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    voted_at = Column(DateTime, nullable=True)
