@@ -10,6 +10,6 @@ class Question(Base):
     creator_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     poll_id = Column(Integer, ForeignKey("polls.id"), index=True, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    type = Column(SqlEnum(QuestionType), nullable=False)
+    type = Column(SqlEnum(QuestionType), nullable=True)
     choices_number = Column(Integer, nullable=True)
-    content = Column(String, nullable=False)
+    content = Column(String, nullable=True)

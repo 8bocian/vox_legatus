@@ -1,13 +1,17 @@
+from typing import Optional, List
+
 from pydantic import BaseModel
 from app.enums import PollStatus
 from datetime import datetime
+from app.schemas.question import QuestionCreateInput, QuestionReadFull
 
 
 class PollBase(BaseModel):
-    title: str
-    status: PollStatus
-    opened_at: datetime
-    closed_at: datetime
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[PollStatus] = None
+    opened_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
 
     class Config:
         orm_mode = True
@@ -17,8 +21,15 @@ class PollCreate(PollBase):
     creator_id: int
 
 
+class PollCreateInput(PollBase):
+    pass
+
 
 class PollUpdate(PollBase):
+    pass
+
+
+class PollUpdateInput(PollBase):
     pass
 
 
@@ -26,6 +37,15 @@ class PollRead(PollBase):
     id: int
     creator_id: int
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PollReadFull(PollBase):
+    id: int
+    creator_id: int
+    created_at: datetime
+    questions: List[QuestionReadFull]
 
     class Config:
         from_attributes = True

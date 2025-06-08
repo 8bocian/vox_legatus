@@ -1,0 +1,139 @@
+import { getAuthHeaders, fetchWithAuth } from './api.js';
+import { title, content, popupTitle, popupContent, createBtn } from './elements.js';
+import { openPopup, closePopup } from './dashboard-popup.js';
+
+export async function loadUsers() {
+  try {
+    const users = await fetchWithAuth('/api/user');
+    title.innerHTML = '<h2>Użytkownicy</h2>';
+    content.innerHTML = ''; // Wyczyść wcześniej
+
+
+    users.forEach(user => {
+      const div = document.createElement('div');
+      div.className = 'userField';
+      div.innerHTML = `<div>Imie: ${user.name}</div><div>Nazwisko: ${user.surname}</div><div>Email: ${user.email}</div><div>Rola: ${user.role}</div>`;
+      div.onclick = async () => {
+        const data = await fetchWithAuth(`/api/user/${user.id}`);
+        loadUsersPopup(data);
+        openPopup();
+      };
+      content.appendChild(div);
+    });
+
+  } catch (error) {
+    console.error(error);
+    content.innerText = 'Błąd ładowania użytkowników';
+  }
+}
+
+export function loadUsersPopup(user = null) {
+  popupTitle.innerHTML = user ? 'Edytuj użytkownika' : 'Nowy użytkownik';
+
+  popupContent.innerHTML = `
+    <div class="input"><div class="inputTitle">Imię</div><input id="nameInp" value="${user ? user.name : ''}"></div>
+    <div class="input"><div class="inputTitle">Nazwisko</div><input id="surnameInp" value="${user ? user.surname : ''}"></div>
+    <div class="input"><div class="inputTitle">Email</div><input id="emailInp" value="${user ? user.email : ''}"></div>
+    <div class="input"><div class="inputTitle">Hasło</div><input id="passwordInp" type="password" placeholder="${user ? 'Pozostaw puste, jeśli nie zmieniasz' : ''}"></div>
+    <div class="input"><div class="inputTitle">Rola</div>
+      <select id="roleInp">
+        <option value="User" ${user && user.role === 'User' ? 'selected' : ''}>Użytkownik</option>
+        <option value="Admin" ${user && user.role === 'Admin' ? 'selected' : ''}>Administrator</option>
+      </select>
+    </div>
+  `;
+
+  createBtn.onclick = () => {
+    if (user) {
+      updateUserFromPopup(user.id);
+    } else {
+      createUserFromPopup();
+    }
+  };
+}
+
+export async function updateUserFromPopup(userId) {
+  const name = document.getElementById('nameInp').value.trim();
+  const surname = document.getElementById('surnameInp').value.trim();
+  const email = document.getElementById('emailInp').value.trim();
+  const password = document.getElementById('passwordInp').value;
+  const role = document.getElementById('roleInp').value;
+
+  if (!name || !surname || !email) {
+    alert("Imię, nazwisko i email są wymagane.");
+    return;
+  }
+
+  // Tworzymy payload, jeśli hasło jest puste, nie wysyłamy go (żeby nie zmieniać hasła)
+  const payload = { name, surname, email, role };
+  if (password) {
+    payload.password = password;
+  }
+
+  try {
+    const response = await fetch(`/api/user/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Błąd aktualizacji użytkownika.');
+    }
+
+    closePopup();
+    loadUsers();
+
+  } catch (error) {
+    console.error('Błąd:', error);
+    alert('Nie udało się zaktualizować użytkownika: ' + error.message);
+  }
+}
+
+export async function createUserFromPopup() {
+  const name = document.getElementById('nameInp').value.trim();
+  const surname = document.getElementById('surnameInp').value.trim();
+  const email = document.getElementById('emailInp').value.trim();
+  const password = document.getElementById('passwordInp').value;
+  const role = document.getElementById('roleInp').value;
+
+  if (!name || !surname || !email || !password) {
+    alert("Wszystkie pola są wymagane.");
+    return;
+  }
+
+  const payload = {
+    name,
+    surname,
+    email,
+    password,
+    role
+  };
+
+  try {
+    const response = await fetch('/api/user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Błąd tworzenia użytkownika.');
+    }
+
+    closePopup();
+    loadUsers();
+
+  } catch (error) {
+    console.error('Błąd:', error);
+    alert('Nie udało się utworzyć użytkownika: ' + error.message);
+  }
+}

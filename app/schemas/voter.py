@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -15,7 +17,7 @@ class VoterCreate(VoterBase):
 
 
 class VoterUpdate(VoterBase):
-    voted_at: datetime
+    voted_at: Optional[datetime]
 
 
 class VoterRead(VoterBase):

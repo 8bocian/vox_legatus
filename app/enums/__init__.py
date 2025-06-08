@@ -1,3 +1,3 @@
-from role import Role
-from poll_status import PollStatus
-from question_type import QuestionType
+from app.enums.role import Role
+from app.enums.poll_status import PollStatus
+from app.enums.question_type import QuestionType

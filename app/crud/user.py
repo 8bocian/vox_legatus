@@ -1,17 +1,64 @@
-from sqlalchemy import desc
-from typing import List, Type
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from app.models import User
+from app.schemas.user import UserCreate, UserUpdate
+from typing import List, Optional
+from sqlalchemy.engine import ScalarResult
 
 
-def get_user(db: Session, user_id: int):
-    return db.query(User).get(user_id)
+async def get_users(db: AsyncSession, email: Optional[str], size: int, offset: int) -> List[User]:
+    query = select(User)
+    if email is not None:
+        query = query.where(User.email.ilike(f"%{email}%"))
 
-def create_user(db: Session, user: UserCreate):
-    new_user = User(
-        name=
-        surname=
-        email=
-        role=
+    query = (
+        query
+        .offset(offset)
+        .limit(size)
     )
-    return db.add()
+    result: ScalarResult[User] = (await db.scalars(query))
+
+    return list(result.all())
+
+
+async def get_user(db: AsyncSession, user_id: Optional[int] = None, email: Optional[str] = None) -> Optional[User]:
+    query = select(User)
+
+    if user_id is not None:
+        query = query.where(User.id == user_id)
+    if email is not None:
+        query = query.where(User.email == email)
+
+    if user_id is None and email is None:
+        return None
+
+    return (await db.scalar(query))
+
+
+async def create_user(db: AsyncSession, user: UserCreate):
+    new_user = User(
+        name=user.name,
+        surname=user.surname,
+        email=user.email,
+        password=user.password,
+        role=user.role,
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    return new_user
+
+
+async def update_user(db: AsyncSession, user_id: int, user: UserUpdate) -> Optional[User]:
+    db_user = (await get_user(db, user_id))
+
+    if not db_user:
+        return None
+
+    for field, value in user.model_dump(exclude_unset=True).items():
+        setattr(db_user, field, value)
+
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user

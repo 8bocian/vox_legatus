@@ -1,0 +1,43 @@
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+  <link rel="stylesheet" href="/static/css/dashboard.css?v={{ timestamp }}" />
+</head>
+<body>
+  <nav>
+    <div id="pollsBtn">Głosowania</div>
+    <div id="usersBtn">Użytkownicy</div>
+  </nav>
+
+  <main>
+    <div id="title"></div>
+    <div id="openBtn" class="btn"><img src="/static/images/add.svg" alt="+" /></div>
+    <div id="content"></div>
+  </main>
+
+  <div id="popup">
+    <div class="popupBody">
+      <div class="popupHeader">
+        <div id="popupTitle"></div>
+        <div id="closeBtn" class="btn">
+          <img src="/static/images/delete.svg" alt="x" />
+        </div>
+      </div>
+      <div id="popupContent" class="popupContent">
+
+      </div>
+      <div class="popupFooter">
+        <div id="createBtn" class="btn">
+          <img src="/static/images/create.svg" alt="x" />
+        </div>
+      </div>
+    </div>
+  </div>
+<script type="module" src="/static/js/api.js?v={{ timestamp  }}"></script>
+<script type="module" src="/static/js/elements.js?v={{ timestamp  }}"></script>
+<script type="module" src="/static/js/dashboard.js?v={{ timestamp  }}"></script>
+<script type="module" src="/static/js/dashboard-poll.js?v={{ timestamp  }}"></script>
+<script type="module" src="/static/js/dashboard-user.js?v={{ timestamp  }}"></script>
+
+</body>

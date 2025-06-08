@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr
 from app.enums import Role
 
@@ -18,7 +20,11 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(UserBase):
-    pass
+    password: Optional[str] = None
+    name: Optional[str] = None
+    surname: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[Role] = None
 
 
 class UserRead(UserBase):

@@ -9,6 +9,6 @@ class Answer(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, index=True, nullable=False)
     poll_id = Column(Integer, ForeignKey("polls.id"), index=True, nullable=False)
     creator_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
-    question_id = Column(Integer, ForeignKey("poll_fields.id"), index=True, nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id"), index=True, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    content = Column(String, nullable=False)
+    content = Column(String, nullable=True)
