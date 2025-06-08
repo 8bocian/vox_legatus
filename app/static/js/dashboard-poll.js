@@ -114,6 +114,12 @@ export async function loadPollsPopup(poll = null) {
     }));
 
     typeSelect.value = question.type || 'SINGLE_CHOICE';
+    if (typeSelect.value === 'MULTIPLE_CHOICE') {
+      choicesWrapper.style.display = 'block';
+    } else {
+      choicesWrapper.style.display = 'none';
+    }
+
     typeSelect.addEventListener('change', async () => {
       const value = typeSelect.value;
       if (value === 'MULTIPLE_CHOICE') {
