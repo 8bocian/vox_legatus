@@ -13,7 +13,7 @@ from app.crud import answer as answer_crud
 from app.crud import voter as voter_crud
 from app.schemas.question import QuestionCreate, QuestionReadFull, QuestionRead, QuestionCreateInput, \
     QuestionUpdateInput, QuestionUpdate
-from app.schemas.voter import VoterCreate, VoterRead
+from app.schemas.voter import VoterCreate, VoterRead, VoterUserRead
 
 router = APIRouter()
 
@@ -209,7 +209,7 @@ async def update_answer(
     return updated_answer
 
 
-@router.post("/{poll_id}/user/{user_id}", response_model=VoterRead)
+@router.post("/{poll_id}/user/{user_id}", response_model=VoterUserRead)
 async def create_voter(
         poll_id: Annotated[int, Path()],
         user_id: Annotated[int, Path()],
@@ -222,7 +222,7 @@ async def create_voter(
     return voter
 
 
-@router.get("/{poll_id}/voters", response_model=List[VoterRead])
+@router.get("/{poll_id}/voters", response_model=List[VoterUserRead])
 async def get_voters(
         poll_id: Annotated[int, Path()],
         jwt_user: Annotated[User, Depends(get_current_user)],

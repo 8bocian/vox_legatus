@@ -265,11 +265,11 @@ let pollId = null;
 
 export async function loadVotersPopup(poll) {
   console.log(poll);
-  pollId = poll.id;
+  const pollId = poll.id;
 
   popupTitle.textContent = `Zarządzaj głosującymi dla: ${poll.title}`;
   popupContent.innerHTML = `
-    <input type="text" id="userSearchInp" placeholder="Wyszukaj użytkownika po emailu..." style="width: 100%; margin-bottom: 10px;"/>
+    <input type="text" id="userSearchInp" placeholder="Wyszukaj użytkownika po emailu..." style="width: 100%; margin-bottom: 10px;" />
     <div id="usersList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;"></div>
     <h3>Aktualni głosujący:</h3>
     <div id="votersList" style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;"></div>
@@ -279,8 +279,8 @@ export async function loadVotersPopup(poll) {
   const usersList = document.getElementById('usersList');
   const votersList = document.getElementById('votersList');
 
-  // Load current voters from backend, example response: [{ id, user_id, ... , user: {id, email, name} }]
-  currentVoters = await fetchWithAuth(`/api/poll/${pollId}/voters`);
+  // Załaduj obecnych głosujących
+  let currentVoters = await fetchWithAuth(`/api/poll/${pollId}/voters`);
   renderVoters();
 
   userSearchInp.addEventListener('input', debounce(async () => {
@@ -290,7 +290,7 @@ export async function loadVotersPopup(poll) {
       return;
     }
 
-    // Adjust endpoint to your real users filter endpoint, here assumed `/api/users?q=...`
+    // Pobierz użytkowników według zapytania
     const users = await fetchWithAuth(`/api/user?email=${encodeURIComponent(query)}`);
     renderUsers(users);
   }, 300));
@@ -303,8 +303,8 @@ export async function loadVotersPopup(poll) {
     }
 
     users.forEach(user => {
-      // Skip users already voters (compare by user.id)
-      if (currentVoters.some(v => v.voter.user_id === user.id)) return;
+      // Pomijaj użytkowników już jako głosujących
+      if (currentVoters.some(v => v.user.id === user.id)) return;
 
       const div = document.createElement('div');
       div.textContent = `${user.email} (${user.name || 'Brak nazwy'})`;
@@ -313,11 +313,13 @@ export async function loadVotersPopup(poll) {
       div.style.borderBottom = '1px solid #ddd';
 
       div.onclick = async () => {
-        // Add user as voter, backend returns voter object
+        // Dodaj użytkownika jako głosującego
         const voter = await post(`/api/poll/${pollId}/user/${user.id}`, {});
-        currentVoters.push({ voter, user }); // add locally
+        // Backend powinien zwrócić obiekt { voter, user }
+        // Jeśli backend zwraca tylko voter, to dołącz user ręcznie:
+        currentVoters.push(voter);
         renderVoters();
-        renderUsers(users); // re-render to hide added user
+        renderUsers(users); // odśwież listę użytkowników by ukryć dodanego
       };
 
       usersList.appendChild(div);
@@ -331,9 +333,10 @@ export async function loadVotersPopup(poll) {
       return;
     }
 
-    currentVoters.forEach(({ voter, user }) => {
+    currentVoters.forEach(voter => {
+      const user = voter.user;
       const div = document.createElement('div');
-      div.textContent = user?.email || 'Nieznany użytkownik';
+      div.textContent = user.email || 'Nieznany użytkownik';
       div.style.padding = '5px';
       div.style.borderBottom = '1px solid #ddd';
       div.style.display = 'flex';
@@ -345,8 +348,7 @@ export async function loadVotersPopup(poll) {
       removeBtn.style.marginLeft = '10px';
       removeBtn.onclick = async () => {
         await del(`/api/voter/${voter.id}`);
-        // Remove by voter id
-        currentVoters = currentVoters.filter(v => v.voter.id !== voter.id);
+        currentVoters = currentVoters.filter(v => v.id !== voter.id);
         renderVoters();
       };
 

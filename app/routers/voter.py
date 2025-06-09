@@ -9,6 +9,7 @@ from app.schemas.answer import AnswerCreate, AnswerRead, AnswerCreateInput, Answ
 from app.schemas.poll import PollCreate, PollRead, PollUpdate, PollCreateInput, PollReadFull, PollUpdateInput
 from app.crud import voter as voter_crud
 from app.crud import poll as poll_crud
+from app.schemas.voter import VoterUserRead
 
 router = APIRouter()
 
@@ -31,3 +32,15 @@ async def get_polls_for_user(
 ):
     voter = await voter_crud.delete_voter(session, voter_id)
     return voter
+
+@router.delete("/{voter_id}")
+async def delete_voter(
+        voter_id: Annotated[int, Path()],
+        jwt_user: Annotated[User, Depends(get_current_user)],
+        session: Annotated[AsyncSession, Depends(get_db)]
+
+):
+    try:
+        await voter_crud.delete_voter(session, voter_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Voter not found")

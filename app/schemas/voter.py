@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from app.schemas.user import UserRead
+
 
 class VoterBase(BaseModel):
     pass
@@ -20,6 +22,7 @@ class VoterUpdate(VoterBase):
     voted_at: datetime
 
 
+
 class VoterRead(VoterBase):
     id: int
     poll_id: int
@@ -28,3 +31,6 @@ class VoterRead(VoterBase):
 
     class Config:
         from_attributes = True
+
+class VoterUserRead(VoterRead):
+    user: Optional[UserRead]
