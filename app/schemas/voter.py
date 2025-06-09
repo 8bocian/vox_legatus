@@ -5,23 +5,25 @@ from pydantic import BaseModel
 
 
 class VoterBase(BaseModel):
-    poll_id: int
-    user_id: int
+    pass
 
     class Config:
         orm_mode = True
 
 
 class VoterCreate(VoterBase):
-    pass
+    poll_id: int
+    user_id: int
 
 
 class VoterUpdate(VoterBase):
-    voted_at: Optional[datetime]
+    voted_at: datetime
 
 
 class VoterRead(VoterBase):
     id: int
+    poll_id: int
+    user_id: int
     created_at: datetime
 
     class Config:

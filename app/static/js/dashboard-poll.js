@@ -12,14 +12,47 @@ export async function loadPolls() {
     polls.forEach(poll => {
       const div = document.createElement('div');
       div.className = 'pollField';
-      div.innerHTML = `<strong>${poll.title}</strong><br/>Opis: ${poll.description}`;
-      div.onclick = async () => {
+      div.innerHTML = `
+        <div class="pollDesc">
+          <div>Tytuł: ${poll.title}</div>
+          <div>Opis: ${poll.description}</div>
+        </div>
+        <div class="pollBtns">
+          <div class="btn editBtn"><img src="/static/images/edit.svg" alt="edit" /></div>
+          <div class="btn votersBtn"><img src="/static/images/people.svg" alt="voters" /></div>
+          <div class="btn deleteBtn"><img src="/static/images/bin.svg" alt="delete" /></div>
+        </div>
+      `;
+
+      // Attach listeners to each button
+      const editBtn = div.querySelector('.editBtn');
+      const votersBtn = div.querySelector('.votersBtn');
+      const deleteBtn = div.querySelector('.deleteBtn');
+
+      editBtn.onclick = async (e) => {
+        e.stopPropagation(); // Prevent bubbling if nested in clickable elements
         const data = await fetchWithAuth(`/api/poll/${poll.id}`);
         loadPollsPopup(data);
         openPopup();
       };
+
+      votersBtn.onclick = async (e) => {
+        e.stopPropagation();
+        loadVotersPopup(poll);
+      };
+
+
+      deleteBtn.onclick = async (e) => {
+        e.stopPropagation();
+        if (confirm(`Na pewno usunąć "${poll.title}"?`)) {
+          await del(`/api/poll/${poll.id}`);
+          div.remove();
+        }
+      };
+
       content.appendChild(div);
     });
+
 
   } catch (error) {
     console.error(error);
@@ -40,7 +73,7 @@ export async function loadPollsPopup(poll = null) {
 
   popupContent.innerHTML = `
     <div class="input"><div class="inputTitle">Tytuł</div><input id="titleInp"></div>
-    <div class="input"><div class="inputTitle">Opis</div><input id="descriptionInp"></div>
+    <div class="input"><div class="inputTitle">Opis</div><textarea id="descriptionInp" rows="2" style="resize: vertical; width: 30%;"></textarea></div>
     <div class="input"><div class="inputTitle">Data Otwarcia</div><input type="datetime-local" id="opened_atInp"></div>
     <div class="input"><div class="inputTitle">Data Zamknięcia</div><input type="datetime-local" id="closed_atInp"></div>
     <hr/>
@@ -74,7 +107,18 @@ export async function loadPollsPopup(poll = null) {
       };
       poll = await post('/api/poll', data);
     }
-    const newQuestion = await post(`/api/poll/${poll.id}/question`, { });
+
+    const newQuestion = await post(`/api/poll/${poll.id}/question`, {});
+
+    // Add default answers
+    const defaultAnswers = ['Tak', 'Nie', 'Wstrzymuję się'];
+    newQuestion.answers = [];
+
+    for (const answerText of defaultAnswers) {
+      const answer = await post(`/api/poll/${poll.id}/question/${newQuestion.id}/answer`, { content: answerText });
+      newQuestion.answers.push(answer);
+    }
+
     addQuestionElement(newQuestion);
   }
 
@@ -213,4 +257,103 @@ export async function loadPollsPopup(poll = null) {
     closePopup();
     loadPolls();
   };
+}
+
+
+let currentVoters = []; // array of { voter, user }
+let pollId = null;
+
+export async function loadVotersPopup(poll) {
+  console.log(poll);
+  pollId = poll.id;
+
+  popupTitle.textContent = `Zarządzaj głosującymi dla: ${poll.title}`;
+  popupContent.innerHTML = `
+    <input type="text" id="userSearchInp" placeholder="Wyszukaj użytkownika po emailu..." style="width: 100%; margin-bottom: 10px;"/>
+    <div id="usersList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;"></div>
+    <h3>Aktualni głosujący:</h3>
+    <div id="votersList" style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;"></div>
+  `;
+
+  const userSearchInp = document.getElementById('userSearchInp');
+  const usersList = document.getElementById('usersList');
+  const votersList = document.getElementById('votersList');
+
+  // Load current voters from backend, example response: [{ id, user_id, ... , user: {id, email, name} }]
+  currentVoters = await fetchWithAuth(`/api/poll/${pollId}/voters`);
+  renderVoters();
+
+  userSearchInp.addEventListener('input', debounce(async () => {
+    const query = userSearchInp.value.trim();
+    if (query.length < 2) {
+      usersList.innerHTML = '<i>Wpisz co najmniej 2 znaki, aby szukać...</i>';
+      return;
+    }
+
+    // Adjust endpoint to your real users filter endpoint, here assumed `/api/users?q=...`
+    const users = await fetchWithAuth(`/api/user?email=${encodeURIComponent(query)}`);
+    renderUsers(users);
+  }, 300));
+
+  function renderUsers(users) {
+    usersList.innerHTML = '';
+    if (!users.length) {
+      usersList.innerHTML = '<i>Brak użytkowników pasujących do wyszukiwania.</i>';
+      return;
+    }
+
+    users.forEach(user => {
+      // Skip users already voters (compare by user.id)
+      if (currentVoters.some(v => v.voter.user_id === user.id)) return;
+
+      const div = document.createElement('div');
+      div.textContent = `${user.email} (${user.name || 'Brak nazwy'})`;
+      div.style.cursor = 'pointer';
+      div.style.padding = '5px';
+      div.style.borderBottom = '1px solid #ddd';
+
+      div.onclick = async () => {
+        // Add user as voter, backend returns voter object
+        const voter = await post(`/api/poll/${pollId}/user/${user.id}`, {});
+        currentVoters.push({ voter, user }); // add locally
+        renderVoters();
+        renderUsers(users); // re-render to hide added user
+      };
+
+      usersList.appendChild(div);
+    });
+  }
+
+  function renderVoters() {
+    votersList.innerHTML = '';
+    if (!currentVoters.length) {
+      votersList.innerHTML = '<i>Brak głosujących.</i>';
+      return;
+    }
+
+    currentVoters.forEach(({ voter, user }) => {
+      const div = document.createElement('div');
+      div.textContent = user?.email || 'Nieznany użytkownik';
+      div.style.padding = '5px';
+      div.style.borderBottom = '1px solid #ddd';
+      div.style.display = 'flex';
+      div.style.justifyContent = 'space-between';
+      div.style.alignItems = 'center';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Usuń';
+      removeBtn.style.marginLeft = '10px';
+      removeBtn.onclick = async () => {
+        await del(`/api/voter/${voter.id}`);
+        // Remove by voter id
+        currentVoters = currentVoters.filter(v => v.voter.id !== voter.id);
+        renderVoters();
+      };
+
+      div.appendChild(removeBtn);
+      votersList.appendChild(div);
+    });
+  }
+
+  openPopup();
 }

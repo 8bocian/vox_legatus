@@ -1,7 +1,9 @@
 from sqlalchemy import desc, ScalarResult
 from typing import List, Type, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import Poll
+from sqlalchemy.orm import joinedload
+
+from app.models import Poll, Voter
 from app.schemas.poll import PollCreate, PollUpdate
 from sqlalchemy.future import select
 
@@ -19,6 +21,15 @@ async def get_polls(db: AsyncSession, creator_id: Optional[int], title: Optional
     result: ScalarResult[Poll] = await db.scalars(query)
     return list(result.all())
 
+
+async def get_polls_by_user(session: AsyncSession, user_id: int) -> List[Poll]:
+    result = await session.execute(
+        select(Poll)
+        .join(Voter, Poll.id == Voter.poll_id)
+        .where(Voter.user_id == user_id)
+        .options(joinedload(Poll.questions))  # Optional: load related questions
+    )
+    return list(result.unique().scalars().all())
 
 
 async def get_poll(db: AsyncSession, poll_id: int) -> Optional[Poll]:
@@ -52,3 +63,13 @@ async def update_poll(db: AsyncSession, poll_id: int, poll: PollUpdate) -> Optio
     await db.commit()
     await db.refresh(db_poll)
     return db_poll
+
+
+async def delete_poll(session: AsyncSession, poll_id: int):
+    poll = await session.get(Poll, poll_id)
+    if not poll:
+        return None
+
+    await session.delete(poll)
+    await session.commit()
+    return poll

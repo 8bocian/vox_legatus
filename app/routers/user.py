@@ -33,6 +33,7 @@ async def get_users(
         offset: Annotated[int, Query(ge=0)] = 0,
         email: Annotated[Optional[str], Query()] = None
 ):
+    print(email)
     users = (await user_crud.get_users(session, email=email, size=size, offset=offset))
     return users
 

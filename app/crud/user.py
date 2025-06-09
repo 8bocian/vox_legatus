@@ -8,6 +8,7 @@ from sqlalchemy.engine import ScalarResult
 
 async def get_users(db: AsyncSession, email: Optional[str], size: int, offset: int) -> List[User]:
     query = select(User)
+    print(email)
     if email is not None:
         query = query.where(User.email.ilike(f"%{email}%"))
 

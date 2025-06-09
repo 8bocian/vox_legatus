@@ -6,7 +6,7 @@ export async function loadUsers() {
   try {
     const users = await fetchWithAuth('/api/user');
     title.innerHTML = '<h2>Użytkownicy</h2>';
-    content.innerHTML = ''; // Wyczyść wcześniej
+    content.innerHTML = '';
 
 
     users.forEach(user => {

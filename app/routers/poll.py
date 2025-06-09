@@ -4,14 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import require_role, get_current_user
 from app.database import get_db
 from app.enums import Role
-from app.models import User
+from app.models import User, Voter
 from app.schemas.answer import AnswerCreate, AnswerRead, AnswerCreateInput, AnswerUpdateInput, AnswerUpdate
 from app.schemas.poll import PollCreate, PollRead, PollUpdate, PollCreateInput, PollReadFull, PollUpdateInput
 from app.crud import poll as poll_crud
 from app.crud import question as question_crud
 from app.crud import answer as answer_crud
+from app.crud import voter as voter_crud
 from app.schemas.question import QuestionCreate, QuestionReadFull, QuestionRead, QuestionCreateInput, \
     QuestionUpdateInput, QuestionUpdate
+from app.schemas.voter import VoterCreate, VoterRead
 
 router = APIRouter()
 
@@ -119,6 +121,14 @@ async def update_poll(
     return updated_poll
 
 
+@router.delete("/{poll_id}", response_model=PollRead)
+async def delete_poll_endpoint(poll_id: int, session: AsyncSession = Depends(get_db)):
+    poll = await poll_crud.delete_poll(session, poll_id)
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    return poll
+
+
 @router.get("/{poll_id}/question/{question_id}", response_model=QuestionRead)
 async def get_question(
         poll_id: Annotated[int, Path()],
@@ -197,3 +207,28 @@ async def update_answer(
 
     updated_answer = (await answer_crud.update_answer(session, answer_id, answer))
     return updated_answer
+
+
+@router.post("/{poll_id}/user/{user_id}", response_model=VoterRead)
+async def create_voter(
+        poll_id: Annotated[int, Path()],
+        user_id: Annotated[int, Path()],
+        jwt_user: Annotated[User, Depends(get_current_user)],
+        session: Annotated[AsyncSession, Depends(get_db)]
+
+):
+    voter = VoterCreate(user_id=user_id, poll_id=poll_id)
+    voter = await voter_crud.create_voter(session, voter)
+    return voter
+
+
+@router.get("/{poll_id}/voters", response_model=List[VoterRead])
+async def get_voters(
+        poll_id: Annotated[int, Path()],
+        jwt_user: Annotated[User, Depends(get_current_user)],
+        session: Annotated[AsyncSession, Depends(get_db)]
+
+):
+    voters = (await voter_crud.get_voters_by_poll_id(session, poll_id, offset=0, size=1000))
+    print(voters)
+    return voters

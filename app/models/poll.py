@@ -1,4 +1,6 @@
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, func, Enum as SqlEnum
+from sqlalchemy.orm import relationship
+
 from app.database import Base
 from app.enums import PollStatus
 
@@ -14,3 +16,9 @@ class Poll(Base):
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     opened_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
+
+    creator = relationship("User", back_populates="polls")
+    questions = relationship("Question", back_populates="poll", cascade="all, delete-orphan")
+    answers = relationship("Answer", back_populates="poll", cascade="all, delete-orphan")
+    votes = relationship("Vote", back_populates="poll", cascade="all, delete-orphan")
+    voters = relationship("Voter", back_populates="poll", cascade="all, delete-orphan")

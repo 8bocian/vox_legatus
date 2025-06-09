@@ -2,12 +2,17 @@ from fastapi import FastAPI
 from app.auth import hash_password
 from app.enums import Role
 from app.models import User
-from app.routers import auth, user, poll, question, vote
+from app.routers import auth, user, poll, question, vote, voter
 from app.web import pages
 from app.database import get_db, async_engine, Base
 from sqlalchemy.future import select
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import asyncio
+
+if "anext" not in dir(__builtins__):
+    async def anext(aiter):
+        return await aiter.__anext__()
 
 app = FastAPI()
 
@@ -50,5 +55,6 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(user.router, prefix="/api/user", tags=["user"])
 app.include_router(poll.router, prefix="/api/poll", tags=["poll"])
 app.include_router(question.router, prefix="/api/question", tags=["question"])
+app.include_router(voter.router, prefix="/api/voter", tags=["voter"])
 app.include_router(vote.router, prefix="/api/vote", tags=["vote"])
 app.include_router(pages.router)

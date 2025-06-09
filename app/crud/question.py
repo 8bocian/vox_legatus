@@ -19,7 +19,7 @@ async def get_questions(db: AsyncSession, creator_id: int, size: int, offset: in
     return list(result.all())
 
 
-async def get_question(db: AsyncSession, question_id: int) -> Question | None:
+async def get_question(db: AsyncSession, question_id: int) -> Optional[Question]:
     return (await db.scalar(select(Question).where(Question.id == question_id)))
 
 
@@ -43,7 +43,7 @@ async def create_question(db: AsyncSession, question: QuestionCreate) -> Questio
     return new_question
 
 
-async def update_question(db: AsyncSession, question_id: int, question: QuestionUpdate) -> Question | None:
+async def update_question(db: AsyncSession, question_id: int, question: QuestionUpdate) -> Optional[Question]:
     db_question = (await get_question(db, question_id))
 
     if not db_question:

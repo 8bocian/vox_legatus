@@ -19,7 +19,7 @@ async def get_answers(db: AsyncSession, creator_id: int, size: int, offset: int)
     return list(result.all())
 
 
-async def get_answer(db: AsyncSession, answer_id: int) -> Answer | None:
+async def get_answer(db: AsyncSession, answer_id: int) -> Optional[Answer]:
     return (await db.scalar(select(Answer).where(Answer.id == answer_id)))
 
 
@@ -42,7 +42,7 @@ async def create_answer(db: AsyncSession, answer: AnswerCreate) -> Answer:
     return new_answer
 
 
-async def update_answer(db: AsyncSession, answer_id: int, answer: AnswerUpdate) -> Answer | None:
+async def update_answer(db: AsyncSession, answer_id: int, answer: AnswerUpdate) -> Optional[Answer]:
     db_answer = (await get_answer(db, answer_id))
 
     if not db_answer:
