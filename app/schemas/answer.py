@@ -34,3 +34,8 @@ class AnswerRead(AnswerBase):
     creator_id: int
     id: int
     created_at: datetime
+
+class AnswerStats(BaseModel):
+    answer_id: int
+    answer_content: str | None
+    votes_count: int

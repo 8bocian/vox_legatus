@@ -54,3 +54,13 @@ async def update_answer(db: AsyncSession, answer_id: int, answer: AnswerUpdate) 
     await db.commit()
     await db.refresh(db_answer)
     return db_answer
+
+
+async def delete_answer(session: AsyncSession, answer_id: int):
+    answer = await session.get(Answer, answer_id)
+    if not answer:
+        return None
+
+    await session.delete(answer)
+    await session.commit()
+    return answer

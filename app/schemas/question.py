@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from app.enums import QuestionType
 from datetime import datetime
 
-from app.schemas.answer import AnswerCreateInput, AnswerRead
+from app.schemas.answer import AnswerCreateInput, AnswerRead, AnswerStats
 
 
 class QuestionBase(BaseModel):
@@ -44,3 +44,7 @@ class QuestionRead(QuestionBase):
 class QuestionReadFull(QuestionRead):
     answers: List[AnswerRead]
 
+class QuestionStats(BaseModel):
+    question_id: int
+    question_content: str | None
+    answers: List[AnswerStats]

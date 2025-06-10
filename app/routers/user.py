@@ -35,7 +35,7 @@ async def get_users(
 ):
     print(email)
     users = (await user_crud.get_users(session, email=email, size=size, offset=offset))
-    print(users[0].email)
+    # print(users[0].email)
     return users
 
 

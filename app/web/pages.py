@@ -30,7 +30,7 @@ async def dashboard(
         return user
     return templates.TemplateResponse("dashboard.html", {"request": request, "user": user, "timestamp":int(time.time())})
 
-@router.get("/dashboard-user")
+@router.get("/vote")
 async def dashboard(
     request: Request,
     user: Annotated[User, Depends(get_current_user_html)],
@@ -38,4 +38,4 @@ async def dashboard(
     print("test")
     if isinstance(user, RedirectResponse):
         return user
-    return templates.TemplateResponse("dashboard-user.html", {"request": request, "user": user, "timestamp":int(time.time())})
+    return templates.TemplateResponse("vote.html", {"request": request, "user": user, "timestamp":int(time.time())})

@@ -1,187 +1,139 @@
-import { get, post } from './api.js';
+import { getAuthHeaders, fetchWithAuth } from './api.js';
+import { title, content, popupTitle, popupContent, createBtn } from './elements.js';
+import { openPopup, closePopup } from './dashboard-popup.js';
 
-const newPollsContainer = document.getElementById('newPolls');
-const votedPollsContainer = document.getElementById('votedPolls');
-
-const pollModal = document.getElementById('pollModal');
-const closeBtn = document.getElementById('closeBtn');
-const submitBtn = document.getElementById('submitBtn');
-const modalForm = document.getElementById('modalForm');
-const modalTitle = document.getElementById('modalTitle');
-
-let currentPoll = null;
-
-async function loadPolls() {
-  const polls = await get('/api/poll');
-
-  newPollsContainer.innerHTML = '';
-  votedPollsContainer.innerHTML = '';
-
-  for (const poll of polls) {
-    const hasVoted = poll.voter && poll.voter.voted_at !== null;
-
-    const div = document.createElement('div');
-    div.className = 'poll' + (hasVoted ? ' voted' : '');
-    console.log(poll);
-    const title = document.createElement('div');
-    title.textContent = poll.title;
-    title.style.fontWeight = 'bold';
-
-    const status = document.createElement('div');
-    status.textContent = poll.status;
-
-    switch (poll.status) {
-      case 'Oczekuje na aktywacje':
-        status.style.color = 'orange';
-        break;
-      case 'Gotowe do głosowania':
-        status.style.color = 'green';
-        break;
-      case 'Zakończone':
-        status.style.color = 'red';
-        break;
-      default:
-        status.style.color = 'gray';
-    }
-
-    div.appendChild(title);
-    div.appendChild(status);
-
-    if (!hasVoted) {
-      div.onclick = () => openPollById(poll.id);
-      newPollsContainer.appendChild(div);
-    } else {
-      votedPollsContainer.appendChild(div);
-    }
-  }
-}
-
-
-async function openPollById(pollId) {
+export async function loadUsers() {
   try {
-    const poll = await get(`/api/poll/${pollId}`);
-    currentPoll = poll;
-    modalTitle.textContent = poll.title;
-    modalForm.innerHTML = '';
+    const users = await fetchWithAuth('/api/user');
+    title.innerHTML = '<h2>Użytkownicy</h2>';
+    content.innerHTML = '';
 
-    poll.questions.forEach(q => {
-      const qDiv = document.createElement('div');
-      qDiv.className = 'question';
-      qDiv.dataset.questionId = q.id;
-      qDiv.dataset.type = q.type;
-      qDiv.dataset.choicesNumber = q.choices_number ?? 1;
 
-      const label = document.createElement('h3');
-      label.textContent = q.content;
-      qDiv.appendChild(label);
-
-      const isMulti = ['MULTI_CHOICE', 'MULTIPLE_CHOICE'].includes(q.type);
-      const inputType = isMulti ? 'checkbox' : 'radio';
-
-      q.answers.forEach(answer => {
-        const optLabel = document.createElement('label');
-        optLabel.style.display = 'block';
-
-        const input = document.createElement('input');
-        input.type = inputType;
-        input.name = isMulti ? `q_${q.id}[]` : `q_${q.id}`;
-        input.value = answer.id;
-
-        input.addEventListener('change', () => {
-          const checked = qDiv.querySelectorAll('input:checked');
-          const max = parseInt(qDiv.dataset.choicesNumber, 10);
-
-          if (isMulti && checked.length > max) {
-            input.checked = false;
-            alert(`Możesz wybrać maksymalnie ${max} odpowiedzi.`);
-          }
-
-          qDiv.style.border = 'none';
-        });
-
-        optLabel.appendChild(input);
-        optLabel.appendChild(document.createTextNode(' ' + answer.content));
-        qDiv.appendChild(optLabel);
-      });
-
-      modalForm.appendChild(qDiv);
+    users.forEach(user => {
+      const div = document.createElement('div');
+      div.className = 'userField';
+      div.innerHTML = `<div>Imie: ${user.name}</div><div>Nazwisko: ${user.surname}</div><div>Email: ${user.email}</div><div>Rola: ${user.role}</div>`;
+      div.onclick = async () => {
+        const data = await fetchWithAuth(`/api/user/${user.id}`);
+        loadUsersPopup(data);
+        openPopup();
+      };
+      content.appendChild(div);
     });
 
-    pollModal.style.display = 'block';
-  } catch (err) {
-    console.error('Nie udało się załadować ankiety:', err);
-    alert('Wystąpił błąd przy pobieraniu ankiety.');
+  } catch (error) {
+    console.error(error);
+    content.innerText = 'Błąd ładowania użytkowników';
   }
 }
 
-function closeModal() {
-  pollModal.style.display = 'none';
-  currentPoll = null;
-  modalForm.innerHTML = '';
+export function loadUsersPopup(user = null) {
+  popupTitle.innerHTML = user ? 'Edytuj użytkownika' : 'Nowy użytkownik';
+
+  popupContent.innerHTML = `
+    <div class="input"><div class="inputTitle">Imię</div><input id="nameInp" value="${user ? user.name : ''}"></div>
+    <div class="input"><div class="inputTitle">Nazwisko</div><input id="surnameInp" value="${user ? user.surname : ''}"></div>
+    <div class="input"><div class="inputTitle">Email</div><input id="emailInp" value="${user ? user.email : ''}"></div>
+    <div class="input"><div class="inputTitle">Hasło</div><input id="passwordInp" type="password" placeholder="${user ? 'Pozostaw puste, jeśli nie zmieniasz' : ''}"></div>
+    <div class="input"><div class="inputTitle">Rola</div>
+      <select id="roleInp">
+        <option value="User" ${user && user.role === 'User' ? 'selected' : ''}>Użytkownik</option>
+        <option value="Admin" ${user && user.role === 'Admin' ? 'selected' : ''}>Administrator</option>
+      </select>
+    </div>
+  `;
+
+  createBtn.onclick = () => {
+    if (user) {
+      updateUserFromPopup(user.id);
+    } else {
+      createUserFromPopup();
+    }
+  };
 }
 
-async function submitVote() {
-  if (!currentPoll) return;
+export async function updateUserFromPopup(userId) {
+  const name = document.getElementById('nameInp').value.trim();
+  const surname = document.getElementById('surnameInp').value.trim();
+  const email = document.getElementById('emailInp').value.trim();
+  const password = document.getElementById('passwordInp').value;
+  const role = document.getElementById('roleInp').value;
 
-  const questionDivs = modalForm.querySelectorAll('.question');
-  const answers = [];
-  let allValid = true;
-
-  questionDivs.forEach(div => {
-    const questionId = div.dataset.questionId;
-    const type = div.dataset.type;
-    const expected = parseInt(div.dataset.choicesNumber, 10);
-    const checkedInputs = Array.from(div.querySelectorAll('input:checked'));
-
-    const isMulti = ['MULTI_CHOICE', 'MULTIPLE_CHOICE'].includes(type);
-
-    let valid = false;
-    if (!isMulti) {
-      valid = checkedInputs.length === 1;
-      if (valid) {
-        const answer = {
-          "question_id": parseInt(questionId),
-          "answer_id": [parseInt(checkedInputs[0].value)]
-        };
-        answers.push(answer);
-//        answers[questionId] = checkedInputs[0].value;
-      }
-    } else {
-      valid = checkedInputs.length === expected;
-      if (valid) {
-        // Jeśli multi-choice - możemy wysłać tablicę odpowiedzi
-        const answer = {
-          "question_id": parseInt(questionId),
-          "answer_id": checkedInputs.map(i => parseInt(i.value))
-        };
-        answers.push(answer);
-      }
-    }
-
-    if (!valid) {
-      allValid = false;
-      div.style.border = '1px solid red';
-    } else {
-      div.style.border = 'none';
-    }
-  });
-
-  if (!allValid) {
-    alert('Musisz zaznaczyć dokładną liczbę odpowiedzi dla każdego pytania.');
+  if (!name || !surname || !email) {
+    alert("Imię, nazwisko i email są wymagane.");
     return;
   }
 
+  // Tworzymy payload, jeśli hasło jest puste, nie wysyłamy go (żeby nie zmieniać hasła)
+  const payload = { name, surname, email, role };
+  if (password) {
+    payload.password = password;
+  }
+
   try {
-    await post(`/api/poll/${currentPoll.id}/vote`, answers);
-    closeModal();
-    await loadPolls();
-  } catch (err) {
-    console.error('Błąd przesyłania:', err);
-    alert('Wystąpił błąd przy przesyłaniu odpowiedzi.');
+    const response = await fetch(`/api/user/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Błąd aktualizacji użytkownika.');
+    }
+
+    closePopup();
+    loadUsers();
+
+  } catch (error) {
+    console.error('Błąd:', error);
+    alert('Nie udało się zaktualizować użytkownika: ' + error.message);
   }
 }
 
-closeBtn.onclick = closeModal;
-submitBtn.onclick = submitVote;
+export async function createUserFromPopup() {
+  const name = document.getElementById('nameInp').value.trim();
+  const surname = document.getElementById('surnameInp').value.trim();
+  const email = document.getElementById('emailInp').value.trim();
+  const password = document.getElementById('passwordInp').value;
+  const role = document.getElementById('roleInp').value;
 
-loadPolls();
+  if (!name || !surname || !email || !password) {
+    alert("Wszystkie pola są wymagane.");
+    return;
+  }
+
+  const payload = {
+    name,
+    surname,
+    email,
+    password,
+    role
+  };
+
+  try {
+    const response = await fetch('/api/user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Błąd tworzenia użytkownika.');
+    }
+
+    closePopup();
+    loadUsers();
+
+  } catch (error) {
+    console.error('Błąd:', error);
+    alert('Nie udało się utworzyć użytkownika: ' + error.message);
+  }
+}

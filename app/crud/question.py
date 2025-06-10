@@ -56,3 +56,13 @@ async def update_question(db: AsyncSession, question_id: int, question: Question
     await db.commit()
     await db.refresh(db_question)
     return db_question
+
+
+async def delete_question(session: AsyncSession, question_id: int):
+    question = await session.get(Question, question_id)
+    if not question:
+        return None
+
+    await session.delete(question)
+    await session.commit()
+    return question

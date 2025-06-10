@@ -19,6 +19,32 @@ async def get_votes(db: AsyncSession, voter_id: int, size: int, offset: int) -> 
     result: ScalarResult[Vote] = await db.scalars(query)
     return list(result.all())
 
+async def get_poll_votes(db: AsyncSession, poll_id: int, size: int, offset: int) -> List[Vote]:
+    query = select(Vote)
+
+    query = (
+        query
+        .where(Vote.poll_id == poll_id)
+        .offset(offset)
+        .limit(size)
+    )
+    result: ScalarResult[Vote] = await db.scalars(query)
+    return list(result.all())
+
+
+async def get_question_votes(db: AsyncSession, question_id: int, size: int, offset: int) -> List[Vote]:
+    query = select(Vote)
+
+    query = (
+        query
+        .where(Vote.question_id == question_id)
+        .offset(offset)
+        .limit(size)
+    )
+    result: ScalarResult[Vote] = await db.scalars(query)
+    return list(result.all())
+
+
 
 async def get_vote(db: AsyncSession, vote_id: int) -> Optional[Vote]:
     return (await db.scalar(select(Vote).where(Vote.id == vote_id)))

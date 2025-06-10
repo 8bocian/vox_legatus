@@ -1,11 +1,15 @@
-from sqlalchemy import desc, ScalarResult
+from fastapi import HTTPException
+from sqlalchemy import desc, ScalarResult, func
 from typing import List, Type, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models import Poll, Voter
-from app.schemas.poll import PollCreate, PollUpdate
+from app.models import Poll, Voter, Question, Answer, Vote
+from app.schemas.answer import AnswerStats
+from app.schemas.poll import PollCreate, PollUpdate, PollReadResult
 from sqlalchemy.future import select
+
+from app.schemas.question import QuestionStats
 
 
 async def get_polls(db: AsyncSession, creator_id: Optional[int], title: Optional[str], size: int, offset: int) -> List[Poll]:
@@ -20,6 +24,61 @@ async def get_polls(db: AsyncSession, creator_id: Optional[int], title: Optional
 
     result: ScalarResult[Poll] = await db.scalars(query)
     return list(result.all())
+
+
+async def get_poll_with_stats(db: AsyncSession, poll_id: int) -> PollReadResult:
+    poll_result = await db.execute(select(Poll).where(Poll.id == poll_id))
+    poll = poll_result.scalar_one_or_none()
+
+    stmt = (
+        select(
+            Question.id.label("question_id"),
+            Question.content.label("question_content"),
+            Answer.id.label("answer_id"),
+            Answer.content.label("answer_content"),
+            func.count(Vote.id).label("votes_count")
+        )
+        .join(Answer, Answer.question_id == Question.id)
+        .outerjoin(Vote, Vote.answer_id == Answer.id)
+        .where(Question.poll_id == poll_id)
+        .group_by(Question.id, Question.content, Answer.id, Answer.content)
+        .order_by(Question.id, Answer.id)
+    )
+
+    result = await db.execute(stmt)
+    rows = result.fetchall()
+
+    # Group into stats
+    question_map: dict[int, QuestionStats] = {}
+
+    for row in rows:
+        qid = row.question_id
+        if qid not in question_map:
+            question_map[qid] = QuestionStats(
+                question_id=qid,
+                question_content=row.question_content,
+                answers=[]
+            )
+        question_map[qid].answers.append(AnswerStats(
+            answer_id=row.answer_id,
+            answer_content=row.answer_content,
+            votes_count=row.votes_count
+        ))
+
+    # Return full PollReadResult
+    return PollReadResult(
+        id=poll.id,
+        creator_id=poll.creator_id,
+        title=poll.title,
+        description=poll.description,
+        status=poll.status.value if poll.status else None,
+        created_at=poll.created_at,
+        opened_at=poll.opened_at,
+        closed_at=poll.closed_at,
+        questions=list(question_map.values())
+    )
+
+
 
 
 async def get_polls_by_user(session: AsyncSession, user_id: int) -> List[Poll]:

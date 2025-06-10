@@ -80,6 +80,7 @@ async def get_poll(
 async def get_polls(
         session: Annotated[AsyncSession, Depends(get_db)],
         jwt_user: Annotated[User, Depends(get_current_user)],
+        votersonly: Annotated[bool, Query()] = False,
         size: Annotated[int, Query(ge=1, le=100)] = 100,
         offset: Annotated[int, Query(ge=0)] = 0,
         creator_id: Annotated[Optional[int], Query()] = None,
@@ -89,6 +90,10 @@ async def get_polls(
     polls = (await poll_crud.get_polls(session, size=size, offset=offset, creator_id=creator_id, title=title))
     voter_polls = []
     for poll in polls:
+        voter = (await voter_crud.get_voters_by_poll_id_and_user_id(session, poll_id=poll.id, user_id=jwt_user.id))
+        if votersonly:
+            if voter is None:
+                continue
         voter_poll = PollRead(
             id=poll.id,
             title=poll.title,
@@ -98,10 +103,12 @@ async def get_polls(
             closed_at=poll.closed_at,
             creator_id=poll.creator_id,
             created_at=poll.created_at,
-            voter=(await voter_crud.get_voters_by_poll_id_and_user_id(session, poll_id=poll.id, user_id=jwt_user.id))
+            voter=voter
         )
         voter_polls.append(voter_poll)
     return voter_polls
+
+
 
 
 @router.post("/", response_model=PollRead)
@@ -138,12 +145,26 @@ async def update_poll(
 
 
 @router.delete("/{poll_id}", response_model=PollRead)
-async def delete_poll_endpoint(poll_id: int, session: AsyncSession = Depends(get_db)):
+async def delete_poll_endpoint(
+        poll_id: Annotated[int, Path()],
+        session: Annotated[AsyncSession, Depends(get_db)]
+):
     poll = await poll_crud.delete_poll(session, poll_id)
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
     return poll
 
+
+@router.delete("/{poll_id}/question/{question_id}", response_model=PollRead)
+async def delete_poll_endpoint(
+        poll_id: Annotated[int, Path()],
+        question_id: Annotated[int, Path()],
+        session: Annotated[AsyncSession, Depends(get_db)]
+):
+    question = await question_crud.delete_question(session, question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    return question
 
 @router.get("/{poll_id}/question/{question_id}", response_model=QuestionRead)
 async def get_question(
@@ -155,7 +176,7 @@ async def get_question(
     question = (await question_crud.get_question(session, question_id))
 
     if not question:
-        raise HTTPException(status_code=404, detail="Poll not found")
+        raise HTTPException(status_code=404, detail="Question not found")
 
     return question
 
@@ -225,6 +246,20 @@ async def update_answer(
     return updated_answer
 
 
+@router.delete("/{poll_id}/question/{question_id}/answer/{answer_id}")
+async def delete_answer(
+        poll_id: Annotated[int, Path()],
+        question_id: Annotated[int, Path()],
+        answer_id: Annotated[int, Path()],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        admin: Annotated[User, Depends(require_role(Role.ADMIN))]
+):
+    answer = (await answer_crud.delete_answer(session, answer_id))
+    if not answer:
+        raise HTTPException(status_code=404, detail="Answer not found")
+    return answer
+
+
 @router.post("/{poll_id}/user/{user_id}", response_model=VoterUserRead)
 async def create_voter(
         poll_id: Annotated[int, Path()],
@@ -260,6 +295,7 @@ async def create_votes(
     if not len(votes):
         raise HTTPException(status_code=400, detail="Brak danych z odpowiedziami")
     voter = (await voter_crud.get_voters_by_poll_id_and_user_id(session, poll_id=poll_id, user_id=jwt_user.id))
+
     await voter_crud.update_voter_voted_at(session, voter.id)
     for vote in votes:
         for answer in vote.answer_id:
@@ -272,3 +308,16 @@ async def create_votes(
             await vote_crud.create_vote(session, new_vote)
 
     return True
+
+
+@router.get("/{poll_id}/results")
+async def get_votes(
+        poll_id: Annotated[int, Path()],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        jwt_user: Annotated[User, Depends(get_current_user)]
+):
+    poll = (await poll_crud.get_poll(session, poll_id))
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    return await poll_crud.get_poll_with_stats(session, poll_id)
+

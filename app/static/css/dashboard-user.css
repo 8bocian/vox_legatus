@@ -4,6 +4,10 @@ body {
 
 }
 
+* {
+  border-radius: 5px;
+}
+
 h2 {
   margin-top: 30px;
 }
@@ -13,6 +17,8 @@ h2 {
   margin: 10px 0;
   border: 1px solid #aaa;
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
 }
 
 .poll.voted {
@@ -93,6 +99,15 @@ h2 {
   padding: 20px;
 }
 
+.questionHeader {
+  padding: 5px;
+  background-color: white;
+}
+
+.questionDescription {
+  text-transform: none;
+}
+
 .question h3 {
   margin: 0;
   margin-bottom: 8px;
@@ -101,4 +116,29 @@ h2 {
 .question label {
   display: block;
   margin-bottom: 5px;
+}
+
+
+.resultAnswer {
+  margin: 5px 0;
+  padding: 4px;
+  background: #f0f0f0;
+  border-radius: 5px;
+  position: relative;
+}
+
+.resultAnswer span {
+  z-index: 2;
+  position: relative;
+}
+
+.resultAnswer .bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #4caf50;
+  opacity: 0.3;
+  border-radius: 5px;
+  z-index: 1;
 }

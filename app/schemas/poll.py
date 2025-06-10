@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 from app.enums import PollStatus
 from datetime import datetime
-from app.schemas.question import QuestionCreateInput, QuestionReadFull
+from app.schemas.question import QuestionCreateInput, QuestionReadFull, QuestionStats
 from app.schemas.voter import VoterRead
 
 
@@ -38,7 +38,7 @@ class PollRead(PollBase):
     id: int
     creator_id: int
     created_at: datetime
-    voter: Optional[VoterRead]
+    voter: Optional[VoterRead] = None
 
     class Config:
         from_attributes = True
@@ -49,6 +49,16 @@ class PollReadFull(PollBase):
     creator_id: int
     created_at: datetime
     questions: List[QuestionReadFull]
+
+    class Config:
+        from_attributes = True
+
+
+class PollReadResult(PollBase):
+    id: int
+    creator_id: int
+    created_at: datetime
+    questions: List[QuestionStats]
 
     class Config:
         from_attributes = True

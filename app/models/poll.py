@@ -12,7 +12,7 @@ class Poll(Base):
     creator_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     title = Column(String, index=True, nullable=True)
     description = Column(String, nullable=True)
-    status = Column(SqlEnum(PollStatus), default=PollStatus.WAITING_FOR_ACTIVATION, nullable=False)
+    status = Column(SqlEnum(PollStatus), default=PollStatus.OFF, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     opened_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
