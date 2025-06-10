@@ -1,5 +1,4 @@
-const API_BASE = 'http://192.168.0.178';
-
+const API_BASE = '';
 
 function getAuthHeaders() {
   return {
