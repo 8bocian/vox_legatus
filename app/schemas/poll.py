@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from app.enums import PollStatus
 from datetime import datetime
 from app.schemas.question import QuestionCreateInput, QuestionReadFull
+from app.schemas.voter import VoterRead
 
 
 class PollBase(BaseModel):
@@ -37,9 +38,11 @@ class PollRead(PollBase):
     id: int
     creator_id: int
     created_at: datetime
+    voter: Optional[VoterRead]
 
     class Config:
         from_attributes = True
+
 
 class PollReadFull(PollBase):
     id: int

@@ -1,4 +1,6 @@
-from sqlalchemy import desc, ScalarResult
+from datetime import datetime
+
+from sqlalchemy import desc, ScalarResult, update
 from typing import List, Type, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -19,6 +21,16 @@ async def get_voters(db: AsyncSession, user_id: int, size: int, offset: int) -> 
     )
     result: ScalarResult[Voter] = await db.scalars(query)
     return list(result.all())
+
+
+async def get_voters_by_poll_id_and_user_id(db: AsyncSession, poll_id: int, user_id: int) -> Voter:
+    query = (
+        select(Voter)
+        .where(Voter.poll_id == poll_id)
+        .where(Voter.user_id == user_id)
+    )
+    return (await db.scalar(query))
+
 
 async def get_voters_by_poll_id(db: AsyncSession, poll_id: int, size: int, offset: int) -> List[Voter]:
     query = (
@@ -59,4 +71,15 @@ async def delete_voter(session: AsyncSession, voter_id: int) -> None:
         raise ValueError(f"Voter with id {voter_id} not found")
 
     await session.delete(voter)
+    await session.commit()
+
+
+async def update_voter_voted_at(session: AsyncSession, voter_id: int):
+    stmt = (
+        update(Voter)
+        .where(Voter.id == voter_id)
+        .values(voted_at=datetime.now())
+        .execution_options(synchronize_session="fetch")
+    )
+    await session.execute(stmt)
     await session.commit()

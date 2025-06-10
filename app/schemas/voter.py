@@ -28,6 +28,7 @@ class VoterRead(VoterBase):
     poll_id: int
     user_id: int
     created_at: datetime
+    voted_at: Optional[datetime]
 
     class Config:
         from_attributes = True

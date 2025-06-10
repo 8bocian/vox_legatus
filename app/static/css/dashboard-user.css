@@ -1,0 +1,104 @@
+body {
+  font-family: Poppins;
+  margin: 20px;
+
+}
+
+h2 {
+  margin-top: 30px;
+}
+
+.poll {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #aaa;
+  cursor: pointer;
+}
+
+.poll.voted {
+  background-color: #e0ffe0;
+  cursor: default;
+}
+
+.modal {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: white;
+  overflow-y: auto;
+  text-transform: uppercase;
+}
+
+.modalContainer {
+  min-width: 200px;
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.modal-header h2 {
+  margin: 0;
+  margin: 20px;
+}
+
+.formContainer {
+  margin: 0 auto;
+}
+
+.formFooter {
+  display: flex;
+  justify-content: space-between;
+}
+
+.close-btn,
+.submit-btn {
+  font-size: 24px;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.close-btn:hover {
+  color: red;
+}
+
+.btn {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  margin: 5px;
+}
+
+.btn img {
+  width: 30px;
+}
+
+.question {
+  margin-bottom: 20px;
+  background: #ddd;
+  padding: 20px;
+}
+
+.question h3 {
+  margin: 0;
+  margin-bottom: 8px;
+}
+
+.question label {
+  display: block;
+  margin-bottom: 5px;
+}

@@ -11,8 +11,11 @@ from app.crud import poll as poll_crud
 from app.crud import question as question_crud
 from app.crud import answer as answer_crud
 from app.crud import voter as voter_crud
+from app.crud import vote as vote_crud
+
 from app.schemas.question import QuestionCreate, QuestionReadFull, QuestionRead, QuestionCreateInput, \
     QuestionUpdateInput, QuestionUpdate
+from app.schemas.vote import VoteCreateInput, VoteCreate
 from app.schemas.voter import VoterCreate, VoterRead, VoterUserRead
 
 router = APIRouter()
@@ -84,8 +87,21 @@ async def get_polls(
 ):
 
     polls = (await poll_crud.get_polls(session, size=size, offset=offset, creator_id=creator_id, title=title))
-
-    return polls
+    voter_polls = []
+    for poll in polls:
+        voter_poll = PollRead(
+            id=poll.id,
+            title=poll.title,
+            description=poll.description,
+            status=poll.status,
+            opened_at=poll.opened_at,
+            closed_at=poll.closed_at,
+            creator_id=poll.creator_id,
+            created_at=poll.created_at,
+            voter=(await voter_crud.get_voters_by_poll_id_and_user_id(session, poll_id=poll.id, user_id=jwt_user.id))
+        )
+        voter_polls.append(voter_poll)
+    return voter_polls
 
 
 @router.post("/", response_model=PollRead)
@@ -232,3 +248,27 @@ async def get_voters(
     voters = (await voter_crud.get_voters_by_poll_id(session, poll_id, offset=0, size=1000))
     print(voters)
     return voters
+
+
+@router.post("/{poll_id}/vote")
+async def create_votes(
+        poll_id: Annotated[int, Path()],
+        votes: Annotated[List[VoteCreateInput], Body()],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        jwt_user: Annotated[User, Depends(get_current_user)]
+):
+    if not len(votes):
+        raise HTTPException(status_code=400, detail="Brak danych z odpowiedziami")
+    voter = (await voter_crud.get_voters_by_poll_id_and_user_id(session, poll_id=poll_id, user_id=jwt_user.id))
+    await voter_crud.update_voter_voted_at(session, voter.id)
+    for vote in votes:
+        for answer in vote.answer_id:
+            new_vote = VoteCreate(
+                answer_id=answer,
+                question_id=vote.question_id,
+                poll_id=poll_id,
+                voter_id=voter.id
+            )
+            await vote_crud.create_vote(session, new_vote)
+
+    return True
