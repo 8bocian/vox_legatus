@@ -89,6 +89,13 @@ async def get_current_user_html(
     return user
 
 
+def require_role_html(required_role: Role):
+    def role_checker(current_user: User = Depends(get_current_user_html)):
+        if current_user.role != required_role:
+            return RedirectResponse("/login", status_code=302)
+        return current_user
+    return role_checker
+
 def require_role(required_role: Role):
     def role_checker(current_user: User = Depends(get_current_user)):
         print(current_user.role, required_role)

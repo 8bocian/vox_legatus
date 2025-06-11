@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel
 from datetime import datetime
@@ -37,5 +37,5 @@ class AnswerRead(AnswerBase):
 
 class AnswerStats(BaseModel):
     answer_id: int
-    answer_content: str | None
+    answer_content: Optional[str]
     votes_count: int

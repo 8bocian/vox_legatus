@@ -46,5 +46,5 @@ class QuestionReadFull(QuestionRead):
 
 class QuestionStats(BaseModel):
     question_id: int
-    question_content: str | None
+    question_content: Optional[str]
     answers: List[AnswerStats]

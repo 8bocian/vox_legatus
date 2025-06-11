@@ -32,9 +32,6 @@ async def get_poll(
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
 
-    if poll.creator_id != jwt_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this poll")
-
     print(poll.id)
     questions = (await question_crud.get_questions_by_poll_id(session, poll.id))
     full_questions = []

@@ -40,7 +40,11 @@ async def login(
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token({"sub": str(user.id)})
-    response = JSONResponse(content={"message": "Logged in"})
+    response = JSONResponse(content={
+        "message": "Logged in",
+        "access_token": token,
+        "role": user.role.name  # Assuming `user.role` is an Enum like ROLE.USER
+    })
     response.set_cookie(
         key="access_token",
         value=token,
