@@ -1,5 +1,16 @@
 const API_BASE = '';
 
+function logout() {
+  // Usunięcie tokenu z localStorage
+  localStorage.removeItem('access_token');
+
+  // Opcjonalnie możesz usunąć też inne dane, jeśli potrzebujesz
+  // localStorage.clear();
+
+  // Przekierowanie na stronę logowania
+  window.location.href = '/login';  // dostosuj URL jeśli masz inny
+}
+
 function getAuthHeaders() {
   return {
     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -78,4 +89,4 @@ async function del(endpoint) {
   return true;
 }
 
-export { getAuthHeaders, fetchWithAuth, post, put, del, get };
+export { logout, getAuthHeaders, fetchWithAuth, post, put, del, get };

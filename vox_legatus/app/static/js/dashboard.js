@@ -2,9 +2,12 @@ import { pollsBtn, usersBtn, openBtn, closeBtn, popup } from './elements.js';
 import { loadPolls, loadPollsPopup } from './dashboard-poll.js';
 import { loadUsers, loadUsersPopup } from './dashboard-user.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
+import { logout } from './api.js';
+
 
 let currentSection = 'polls';
-
+const logoutBtn = document.getElementById('logoutBtn');
+logoutBtn.addEventListener('click', logout);
 
 pollsBtn.addEventListener('click', () => {
   currentSection = 'polls';
