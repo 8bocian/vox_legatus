@@ -29,7 +29,7 @@ async def get_user(
 async def get_users(
         session: Annotated[AsyncSession, Depends(get_db)],
         admin: User = Depends(require_role(Role.ADMIN)),
-        size: Annotated[int, Query(ge=1, le=100)] = 100,
+        size: Annotated[int, Query(ge=1, le=100)] = 1000,
         offset: Annotated[int, Query(ge=0)] = 0,
         email: Annotated[Optional[str], Query()] = None
 ):
