@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import desc, ScalarResult, update
 from typing import List, Type, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.models import Voter
 from app.schemas.voter import VoterCreate, VoterRead
@@ -49,16 +49,12 @@ async def get_voter(db: AsyncSession, voter_id: int) -> Optional[Voter]:
 
 
 async def create_voter(db: AsyncSession, voter: VoterCreate) -> Voter:
-    new_voter = Voter(
-        poll_id=voter.poll_id,
-        user_id=voter.user_id
-    )
-
+    new_voter = Voter(poll_id=voter.poll_id, user_id=voter.user_id)
     db.add(new_voter)
     await db.commit()
-    await db.refresh(new_voter)
+
     result = await db.execute(
-        select(Voter).options(selectinload(Voter.user)).where(Voter.id == new_voter.id)
+        select(Voter).options(joinedload(Voter.user)).where(Voter.id == new_voter.id)
     )
     voter_with_user = result.scalar_one()
     return voter_with_user
