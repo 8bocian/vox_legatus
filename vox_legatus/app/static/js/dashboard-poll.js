@@ -184,7 +184,7 @@ export async function loadPollsPopup(poll = null) {
     const newQuestion = await post(`/api/poll/${poll.id}/question`, {});
 
     // Add default answers
-    const defaultAnswers = ['Tak', 'Nie', 'Wstrzymuję się'];
+    const defaultAnswers = ['Za', 'Przeciw', 'Wstrzymuję się'];
     newQuestion.answers = [];
 
     for (const answerText of defaultAnswers) {
