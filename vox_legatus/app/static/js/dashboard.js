@@ -9,6 +9,12 @@ let currentSection = 'polls';
 const logoutBtn = document.getElementById('logoutBtn');
 logoutBtn.addEventListener('click', logout);
 
+const voteBtn = document.getElementById('voteBtn');
+
+voteBtn.addEventListener('click', () => {
+  window.location.href = '/vote';
+});
+
 pollsBtn.addEventListener('click', () => {
   currentSection = 'polls';
   loadPolls();

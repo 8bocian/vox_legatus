@@ -1,4 +1,4 @@
-import { get, post } from './api.js';
+import { logout, get, post } from './api.js';
 
 const newPollsContainer = document.getElementById('newPolls');
 const votedPollsContainer = document.getElementById('votedPolls');
@@ -6,10 +6,23 @@ const votedPollsContainer = document.getElementById('votedPolls');
 const pollModal = document.getElementById('pollModal');
 const closeBtn = document.getElementById('closeBtn');
 const submitBtn = document.getElementById('submitBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+
 const modalForm = document.getElementById('modalForm');
 const modalTitle = document.getElementById('modalTitle');
 
 let currentPoll = null;
+
+
+logoutBtn.onclick = async () => {
+  try {
+    await logout();
+    window.location.href = '/login';
+  } catch (error) {
+    console.error('Błąd podczas wylogowania:', error);
+    alert('Nie udało się wylogować, spróbuj ponownie.');
+  }
+};
 
 async function loadPolls() {
   const polls = await get('/api/poll?votersonly=true');
