@@ -13,13 +13,13 @@ body {
 
 /* Nawigacja */
 nav {
-    width: 100%;
+    width: calc(100% - 20px);
     display: flex;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     background: #100c47;
-    padding: 10px 0;
+    padding: 10px;
     gap: 10px;
 }
 
@@ -36,6 +36,10 @@ nav div {
 nav div:hover {
     cursor: pointer;
     background: #dc123f;
+}
+
+#logoutBtn {
+  margin-left: auto;
 }
 
 /* Główna zawartość */
@@ -186,6 +190,16 @@ input:checked + .slider:before {
 .status-text {
     font-weight: bold;
     color: #333;
+}
+
+/* Blok użytkownika */
+.userField {
+    background: #f9f9f9;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    border-radius: 6px;
+    margin-bottom: 8px;
 }
 
 /* RESPONSYWNOŚĆ — szczególnie dla małych ekranów */

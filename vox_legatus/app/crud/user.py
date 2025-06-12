@@ -63,3 +63,13 @@ async def update_user(db: AsyncSession, user_id: int, user: UserUpdate) -> Optio
     await db.commit()
     await db.refresh(db_user)
     return db_user
+
+
+async def delete_user(session: AsyncSession, user_id: int) -> Optional[User]:
+    user = await session.get(User, user_id)
+    if not user:
+        return None
+
+    await session.delete(user)
+    await session.commit()
+    return user

@@ -16,11 +16,29 @@ let currentPoll = null;
 
 logoutBtn.onclick = async () => {
   try {
-    await logout();
-    window.location.href = '/login';
+      Swal.fire({
+      icon: 'question',
+      title: 'Potwierdzenie',
+      text: 'Czy na pewno chcesz się wylogować?',
+      showCancelButton: true,
+      confirmButtonText: 'Tak',
+      cancelButtonText: 'Nie',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await logout();
+        window.location.href = '/login';
+      }
+    });
+
   } catch (error) {
     console.error('Błąd podczas wylogowania:', error);
-    alert('Nie udało się wylogować, spróbuj ponownie.');
+    Swal.fire({
+      icon: 'info',
+      title: 'Informacja',
+      text: 'Nie udało się wylogować, spróbuj ponownie.',
+      confirmButtonText: 'OK'
+    });
+
   }
 };
 
@@ -70,11 +88,17 @@ async function loadPolls() {
     const resultsBtn = document.createElement('div');
     resultsBtn.className = 'btn resultsBtn';
     resultsBtn.innerHTML = `<img src="/static/images/result.svg" alt="results" />`;
-    resultsBtn.onclick = () => {
+    resultsBtn.onclick = async (e) => {
+      e.stopPropagation();
       if (hasVoted && poll.status === 'Wyłączone') {
         showPollResults(poll.id);
       } else {
-        alert('Wyniki będą dostępne dopiero po oddaniu głosu i zakończeniu ankiety.');
+        Swal.fire({
+          icon: 'info',
+          title: 'Informacja',
+          text: 'Wyniki będą dostępne dopiero po oddaniu głosu i zakończeniu ankiety.',
+          confirmButtonText: 'OK'
+        });
       }
     };
     pollBtns.appendChild(resultsBtn);
@@ -97,7 +121,12 @@ async function openPollById(pollId) {
     const poll = await get(`/api/poll/${pollId}`);
 
     if (poll.status !== 'Aktywne') {
-      alert('Ta ankieta nie jest aktywna i nie można w niej głosować.');
+      Swal.fire({
+        icon: 'info',
+        title: 'Informacja',
+        text: 'Ta ankieta nie jest aktywna i nie można w niej głosować.',
+        confirmButtonText: 'OK'
+      });
       return;  // nie otwieraj modalu
     }
     submitBtn.style.display = 'block'; // pokaż przycisk submit
@@ -146,7 +175,12 @@ async function openPollById(pollId) {
 
           if (isMulti && checked.length > max) {
             input.checked = false;
-            alert(`Możesz wybrać maksymalnie ${max} odpowiedzi.`);
+            Swal.fire({
+              icon: 'info',
+              title: 'Informacja',
+              text: `Możesz wybrać maksymalnie ${max} odpowiedzi.`,
+              confirmButtonText: 'OK'
+            });
           }
 
           qDiv.style.border = 'none';
@@ -163,7 +197,12 @@ async function openPollById(pollId) {
     pollModal.style.display = 'block';
   } catch (err) {
     console.error('Nie udało się załadować ankiety:', err);
-    alert('Wystąpił błąd przy pobieraniu ankiety.');
+    Swal.fire({
+      icon: 'error',
+      title: 'Błąd',
+      text: 'Wystąpił błąd przy pobieraniu głosowania.',
+      confirmButtonText: 'OK'
+    });
   }
 }
 
@@ -220,7 +259,12 @@ async function submitVote() {
   });
 
   if (!allValid) {
-    alert('Musisz zaznaczyć dokładną liczbę odpowiedzi dla każdego pytania.');
+    Swal.fire({
+      icon: 'info',
+      title: 'Informacja',
+      text: `Musisz zaznaczyć dokładną liczbę odpowiedzi dla każdego pytania.`,
+      confirmButtonText: 'OK'
+    });
     return;
   }
 
@@ -230,13 +274,46 @@ async function submitVote() {
     await loadPolls();
   } catch (err) {
     console.error('Błąd przesyłania:', err);
-    alert('Wystąpił błąd przy przesyłaniu odpowiedzi.');
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Błąd',
+      text: 'Wystąpił błąd przy przesyłaniu odpowiedzi.',
+      confirmButtonText: 'OK'
+    });
   }
 }
 
-closeBtn.onclick = closeModal;
-submitBtn.onclick = submitVote;
-
+closeBtn.onclick = async (e) => {
+  e.stopPropagation();
+  Swal.fire({
+    title: 'Potwierdzenie',
+    text: 'Czy na pewno chcesz opuścić głosowanie?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Tak',
+    cancelButtonText: 'Nie',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      closeModal();
+    }
+  });
+};
+submitBtn.onclick = async (e) => {
+  e.stopPropagation();
+  Swal.fire({
+    title: 'Potwierdzenie',
+    text: 'Czy na pewno chcesz zakończyć głosowanie?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Tak',
+    cancelButtonText: 'Nie',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      submitVote();
+    }
+  });
+};
 loadPolls();
 
 function showPollResults(pollId) {
@@ -285,6 +362,11 @@ function showPollResults(pollId) {
     })
     .catch(err => {
       console.error('Błąd podczas pobierania wyników:', err);
-      alert('Nie udało się pobrać wyników głosowania.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Błąd',
+        text: 'Nie udało się pobrać wyników głosowania.',
+        confirmButtonText: 'OK'
+      });
     });
 }

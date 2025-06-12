@@ -142,23 +142,24 @@ async def update_poll(
 
 
 @router.delete("/{poll_id}", response_model=PollRead)
-async def delete_poll_endpoint(
+async def delete_poll(
         poll_id: Annotated[int, Path()],
-        session: Annotated[AsyncSession, Depends(get_db)]
+        session: Annotated[AsyncSession, Depends(get_db)],
+        admin: Annotated[User, Depends(require_role(Role.ADMIN))]
 ):
-    poll = await poll_crud.delete_poll(session, poll_id)
+    poll = (await poll_crud.delete_poll(session, poll_id))
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
     return poll
 
 
 @router.delete("/{poll_id}/question/{question_id}", response_model=PollRead)
-async def delete_poll_endpoint(
+async def delete_poll_question(
         poll_id: Annotated[int, Path()],
         question_id: Annotated[int, Path()],
         session: Annotated[AsyncSession, Depends(get_db)]
 ):
-    question = await question_crud.delete_question(session, question_id)
+    question = (await question_crud.delete_question(session, question_id))
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
     return question

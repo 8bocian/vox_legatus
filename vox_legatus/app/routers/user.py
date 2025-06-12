@@ -69,3 +69,14 @@ async def update_user(
 
     updated_poll = (await user_crud.update_user(session, user_id, user))
     return updated_poll
+
+@router.delete("/{user_id}", response_model=UserRead)
+async def delete_user(
+        user_id: Annotated[int, Path()],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        admin: Annotated[User, Depends(require_role(Role.ADMIN))]
+):
+    user = (await user_crud.delete_user(session, user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user

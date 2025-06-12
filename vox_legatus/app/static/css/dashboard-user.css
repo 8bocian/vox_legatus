@@ -12,6 +12,13 @@ body {
   justify-content: space-between;
 }
 
+#logoutBtn {
+  transition: transform 0.2s ease;
+}
+
+#logoutBtn:hover {
+  transform: scale(1.2);
+}
 * {
   border-radius: 8px;
   box-sizing: border-box;
@@ -54,7 +61,7 @@ h2 {
   display: none;
   flex-direction: column;
   position: fixed;
-  z-index: 9999;
+  z-index: 2;
   left: 0;
   top: 0;
   width: 100vw;

@@ -124,7 +124,7 @@ async def update_poll(db: AsyncSession, poll_id: int, poll: PollUpdate) -> Optio
     return db_poll
 
 
-async def delete_poll(session: AsyncSession, poll_id: int):
+async def delete_poll(session: AsyncSession, poll_id: int) -> Optional[Poll]:
     poll = await session.get(Poll, poll_id)
     if not poll:
         return None

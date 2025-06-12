@@ -1,10 +1,10 @@
-import { getAuthHeaders, fetchWithAuth } from './api.js';
+import { post, put, get, del } from './api.js';
 import { title, content, popupTitle, popupContent, createBtn } from './elements.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
 
 export async function loadUsers() {
   try {
-    const users = await fetchWithAuth('/api/user');
+    const users = await get('/api/user');
     title.innerHTML = '<h2>Użytkownicy</h2>';
     content.innerHTML = '';
 
@@ -12,13 +12,34 @@ export async function loadUsers() {
     users.forEach(user => {
       const div = document.createElement('div');
       div.className = 'userField';
-      div.innerHTML = `<div>Imie: ${user.name}</div><div>Nazwisko: ${user.surname}</div><div>Email: ${user.email}</div><div>Rola: ${user.role}</div>`;
-      div.onclick = async () => {
-        const data = await fetchWithAuth(`/api/user/${user.id}`);
+      div.innerHTML = `
+      <div class="userDesc">
+        <div>Imie: ${user.name}</div>
+        <div>Nazwisko: ${user.surname}</div>
+        <div>Email: ${user.email}</div>
+        <div>Rola: ${user.role}</div>
+      </div>
+      <div class="pollBtns">
+        <div class="btn editBtn"><img src="/static/images/edit.svg" alt="edit" /></div>
+        <div class="btn deleteBtn"><img src="/static/images/bin.svg" alt="delete" /></div>
+      </div>
+      `;
+      content.appendChild(div);
+      const editBtn = div.querySelector('.editBtn');
+      const deleteBtn = div.querySelector('.deleteBtn');
+
+      deleteBtn.onclick = async (e) => {
+        e.stopPropagation();
+        const data = await del(`/api/user/${user.id}`);
+        loadUsers();
+      };
+
+      editBtn.onclick = async (e) => {user
+        e.stopPropagation();
+        const data = await get(`/api/user/${user.id}`);
         loadUsersPopup(data);
         openPopup();
       };
-      content.appendChild(div);
     });
 
   } catch (error) {
@@ -71,19 +92,7 @@ export async function updateUserFromPopup(userId) {
   }
 
   try {
-    const response = await fetch(`/api/user/${userId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Błąd aktualizacji użytkownika.');
-    }
+    await put(`/api/user/${userId}`, payload);
 
     closePopup();
     loadUsers();
@@ -115,19 +124,7 @@ export async function createUserFromPopup() {
   };
 
   try {
-    const response = await fetch('/api/user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Błąd tworzenia użytkownika.');
-    }
+    await post('/api/user', payload);
 
     closePopup();
     loadUsers();
