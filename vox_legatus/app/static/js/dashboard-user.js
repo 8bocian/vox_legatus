@@ -30,8 +30,19 @@ export async function loadUsers() {
 
       deleteBtn.onclick = async (e) => {
         e.stopPropagation();
-        const data = await del(`/api/user/${user.id}`);
-        loadUsers();
+        Swal.fire({
+          icon: 'question',
+          title: 'Potwierdzenie',
+          text: `Czy na pewno chcesz się usunąć użytkownika ${user.email}?`,
+          showCancelButton: true,
+          confirmButtonText: 'Tak',
+          cancelButtonText: 'Nie',
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            const data = await del(`/api/user/${user.id}`);
+            loadUsers();
+          }
+        });
       };
 
       editBtn.onclick = async (e) => {user

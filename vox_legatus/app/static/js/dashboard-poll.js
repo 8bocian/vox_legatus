@@ -120,10 +120,19 @@ export async function loadPolls() {
 
       deleteBtn.onclick = async (e) => {
         e.stopPropagation();
-        if (confirm(`Na pewno usunąć "${poll.title}"?`)) {
-          await del(`/api/poll/${poll.id}`);
-          div.remove();
-        }
+        Swal.fire({
+          icon: 'question',
+          title: 'Potwierdzenie',
+          text: `Czy na pewno chcesz się usunąć głosowanie ${poll.title}?`,
+          showCancelButton: true,
+          confirmButtonText: 'Tak',
+          cancelButtonText: 'Nie',
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await del(`/api/poll/${poll.id}`);
+            div.remove();
+          }
+        });
       };
 
       content.appendChild(div);
