@@ -132,9 +132,6 @@ async def update_poll(
     if not poll_to_change:
         raise HTTPException(status_code=404, detail="Poll not found")
 
-    if poll_to_change.creator_id != jwt_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this poll")
-
     poll = PollUpdate(**poll.model_dump(exclude_unset=True))
 
     updated_poll = (await poll_crud.update_poll(session, poll_id, poll))
