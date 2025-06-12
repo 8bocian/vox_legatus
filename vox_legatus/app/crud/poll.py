@@ -65,7 +65,23 @@ async def get_poll_with_stats(db: AsyncSession, poll_id: int) -> PollReadResult:
             votes_count=row.votes_count
         ))
 
-    # Return full PollReadResult
+    # Get total number of eligible voters
+    voter_count_result = await db.execute(
+        select(func.count()).select_from(Voter).where(Voter.poll_id == poll_id)
+    )
+    total_voters = voter_count_result.scalar()
+
+    # Get number of voters who voted at least once
+    voted_count_result = await db.execute(
+        select(func.count(func.distinct(Vote.voter_id)))
+        .select_from(Vote)
+        .join(Answer, Vote.answer_id == Answer.id)
+        .join(Question, Answer.question_id == Question.id)
+        .where(Question.poll_id == poll_id)
+    )
+    voters_who_voted = voted_count_result.scalar()
+
+    # Return with poll stats
     return PollReadResult(
         id=poll.id,
         creator_id=poll.creator_id,
@@ -75,10 +91,10 @@ async def get_poll_with_stats(db: AsyncSession, poll_id: int) -> PollReadResult:
         created_at=poll.created_at,
         opened_at=poll.opened_at,
         closed_at=poll.closed_at,
-        questions=list(question_map.values())
+        questions=list(question_map.values()),
+        total_voters=total_voters,
+        voters_who_voted=voters_who_voted
     )
-
-
 
 
 async def get_polls_by_user(session: AsyncSession, user_id: int) -> List[Poll]:

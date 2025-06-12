@@ -59,6 +59,8 @@ class PollReadResult(PollBase):
     creator_id: int
     created_at: datetime
     questions: List[QuestionStats]
+    total_voters: int = 0
+    voters_who_voted: int = 0
 
     class Config:
         from_attributes = True

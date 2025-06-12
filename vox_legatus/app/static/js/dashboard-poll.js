@@ -65,8 +65,10 @@ export async function loadPolls() {
           const results = await fetchWithAuth(`/api/poll/${poll.id}/results`);
 
           popupTitle.textContent = `Wyniki: ${poll.title}`;
-          popupContent.innerHTML = '';
-
+            popupTitle.textContent = `Wyniki: ${poll.title}`;
+            popupContent.innerHTML = `
+              <div>Frekwencja: ${results.voters_who_voted}/${results.total_voters}</div>
+            `;
           results.questions.forEach(q => {
             const questionBlock = document.createElement('div');
             questionBlock.innerHTML = `<h4>${q.question_content}</h4>`;
