@@ -208,6 +208,9 @@ input:checked + .slider:before {
     .pollField {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .userField {
         flex-direction: column;
 
     }
