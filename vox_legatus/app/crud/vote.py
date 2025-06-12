@@ -1,5 +1,5 @@
 from sqlalchemy import desc, ScalarResult
-from typing import List, Type, Optional
+from typing import List, Type, Optional, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models import Vote
@@ -50,18 +50,28 @@ async def get_vote(db: AsyncSession, vote_id: int) -> Optional[Vote]:
     return (await db.scalar(select(Vote).where(Vote.id == vote_id)))
 
 
-async def create_vote(db: AsyncSession, vote: VoteCreate) -> Vote:
-    new_vote = Vote(
-        poll_id=vote.poll_id,
-        voter_id=vote.voter_id,
-        question_id=vote.question_id,
-        answer_id=vote.answer_id
-    )
+async def create_vote(db: AsyncSession, vote: Union[VoteCreate, List[VoteCreate]]) -> Vote:
+    if isinstance(vote, list):
+        new_votes = [
+            Vote(
+                poll_id=vote_.poll_id,
+                voter_id=vote_.voter_id,
+                question_id=vote_.question_id,
+                answer_id=vote_.answer_id
+            ) for vote_ in vote
+        ]
+        db.add_all(new_votes)
+    else:
+        new_vote = Vote(
+            poll_id=vote.poll_id,
+            voter_id=vote.voter_id,
+            question_id=vote.question_id,
+            answer_id=vote.answer_id
+        )
 
-    db.add(new_vote)
+        db.add(new_vote)
     await db.commit()
-    await db.refresh(new_vote)
-    return new_vote
+    return True
 
 
 async def delete_vote(session: AsyncSession, vote_id: int) -> None:

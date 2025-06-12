@@ -293,16 +293,20 @@ async def create_votes(
         raise HTTPException(status_code=400, detail="Brak danych z odpowiedziami")
     voter = (await voter_crud.get_voters_by_poll_id_and_user_id(session, poll_id=poll_id, user_id=jwt_user.id))
 
-    await voter_crud.update_voter_voted_at(session, voter.id)
+    vote_creates: List[VoteCreate] = []
+
     for vote in votes:
-        for answer in vote.answer_id:
-            new_vote = VoteCreate(
-                answer_id=answer,
+        for answer_id in vote.answer_id:
+            vote_creates.append(VoteCreate(
+                answer_id=answer_id,
                 question_id=vote.question_id,
                 poll_id=poll_id,
                 voter_id=voter.id
-            )
-            await vote_crud.create_vote(session, new_vote)
+            ))
+
+    await vote_crud.create_vote(session, vote_creates)
+
+    await voter_crud.update_voter_voted_at(session, voter.id)
 
     return True
 
