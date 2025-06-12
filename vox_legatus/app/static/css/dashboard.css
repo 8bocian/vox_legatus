@@ -204,27 +204,14 @@ input:checked + .slider:before {
 
 /* RESPONSYWNOŚĆ — szczególnie dla małych ekranów */
 @media (max-width: 600px) {
-    nav div {
-        font-size: 18px;
-        padding: 10px;
-    }
-
-    .popupBody {
-        padding: 12px;
-    }
-
-    .btn img {
-        width: 20px;
-        height: 20px;
-    }
 
     .pollField {
         flex-direction: column;
         gap: 8px;
-    }
-}
+        flex-direction: column;
 
-@media (max-width: 600px) {
+    }
+
   nav div {
     font-size: 18px;
     padding: 8px 12px;
