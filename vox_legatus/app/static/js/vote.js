@@ -57,7 +57,13 @@ async function loadPolls() {
     const resultsBtn = document.createElement('div');
     resultsBtn.className = 'btn resultsBtn';
     resultsBtn.innerHTML = `<img src="/static/images/result.svg" alt="results" />`;
-    resultsBtn.onclick = () => showPollResults(poll.id);
+    resultsBtn.onclick = () => {
+      if (hasVoted && poll.status === 'Wyłączone') {
+        showPollResults(poll.id);
+      } else {
+        alert('Wyniki będą dostępne dopiero po oddaniu głosu i zakończeniu ankiety.');
+      }
+    };
     pollBtns.appendChild(resultsBtn);
 
     div.appendChild(pollBtns);
