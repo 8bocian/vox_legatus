@@ -66,7 +66,7 @@ async def update_user(
 
     if not user_to_change:
         raise HTTPException(status_code=404, detail="User not found")
-
+    user.password = hash_password(user.password)
     updated_poll = (await user_crud.update_user(session, user_id, user))
     return updated_poll
 
