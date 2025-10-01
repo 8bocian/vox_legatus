@@ -73,7 +73,7 @@ async def get_poll(
     return full_poll
 
 
-@router.get("/", response_model=List[PollRead])
+@router.get("", response_model=List[PollRead])
 async def get_polls(
         session: Annotated[AsyncSession, Depends(get_db)],
         jwt_user: Annotated[User, Depends(get_current_user)],
@@ -108,7 +108,7 @@ async def get_polls(
 
 
 
-@router.post("/", response_model=PollRead)
+@router.post("", response_model=PollRead)
 async def create_poll(
         poll: Annotated[PollCreateInput, Body()],
         session: Annotated[AsyncSession, Depends(get_db)],

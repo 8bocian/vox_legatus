@@ -37,6 +37,10 @@ h2 {
   color: #333;
 }
 
+#pollModal{
+  padding-bottom: 100px;
+}
+
 .poll {
   padding: 15px 20px;
   margin: 10px 0;

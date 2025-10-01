@@ -25,7 +25,7 @@ async def get_user(
     return user
 
 
-@router.get("/", response_model=List[UserRead])
+@router.get("", response_model=List[UserRead])
 async def get_users(
         session: Annotated[AsyncSession, Depends(get_db)],
         admin: User = Depends(require_role(Role.ADMIN)),
@@ -39,7 +39,7 @@ async def get_users(
     return users
 
 
-@router.post("/", response_model=UserRead)
+@router.post("", response_model=UserRead)
 async def create_user(
         user: Annotated[UserCreate, Body()],
         session: Annotated[AsyncSession, Depends(get_db)],
