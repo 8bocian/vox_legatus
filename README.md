@@ -1,0 +1,1 @@
+deploy command: deploy_vox_legatus
