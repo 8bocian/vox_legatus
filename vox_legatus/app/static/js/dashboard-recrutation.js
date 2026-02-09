@@ -1,37 +1,72 @@
 import { fetchWithAuth, post, del } from './api.js';
 import { title, content, popupTitle, popupContent, createBtn } from './elements.js';
-import { openPopup, closePopup } from './dashboard-popup.js';
+import { closePopup } from './dashboard-popup.js';
 
 /* =========================================================
-   ENTRY POINT
+   PUBLIC API – to importuje dashboard
 ========================================================= */
 
-export async function loadRecruitmentAdmin() {
-  title.innerHTML = '<h2>Rekrutacja – grupy i zgłoszenia</h2>';
+export async function loadRecrutation() {
+  title.innerHTML = '<h2>Rekrutacja</h2>';
   content.innerHTML = `
     <div style="display:flex; gap:40px;">
-      <div style="width:40%;">
+      <div style="width:45%;">
         <h3>Grupy oceniających</h3>
-        <button id="addGroupBtn">➕ Dodaj grupę</button>
         <div id="groupsList"></div>
       </div>
 
-      <div style="width:60%;">
+      <div style="width:55%;">
         <h3>Zgłoszenia</h3>
-        <input type="file" id="csvFile" accept=".csv"/>
-        <button id="uploadCsvBtn">Wgraj CSV</button>
-        <button id="assignBtn">Przypisz do grup</button>
-        <div id="submissionsList" style="margin-top:10px;"></div>
+        <div id="submissionsList"></div>
+        <button id="assignBtn">Przypisz zgłoszenia do grup</button>
       </div>
     </div>
   `;
 
-  document.getElementById('addGroupBtn').onclick = createGroup;
-  document.getElementById('uploadCsvBtn').onclick = uploadCsv;
   document.getElementById('assignBtn').onclick = assignSubmissions;
 
   await loadGroups();
   await loadSubmissions();
+}
+
+export function loadRecrutationPopup() {
+  popupTitle.textContent = 'Zarządzanie rekrutacją';
+  popupContent.innerHTML = `
+    <h4>Dodaj grupę oceniających</h4>
+    <button id="createGroupBtn">➕ Utwórz grupę</button>
+
+    <hr/>
+
+    <h4>Dodaj oceniającego do grupy</h4>
+    <input id="popupGroupId" type="number" placeholder="ID grupy"/>
+    <input id="popupUserId" type="number" placeholder="ID użytkownika"/>
+  `;
+
+  createBtn.onclick = async () => {
+    const groupId = document.getElementById('popupGroupId').value;
+    const userId = document.getElementById('popupUserId').value;
+
+    if (!groupId && !userId) {
+      await createGroup();
+    } else {
+      if (!groupId || !userId) {
+        alert('Podaj ID grupy i ID użytkownika');
+        return;
+      }
+      await post(`/api/grading-group/${groupId}/graders`, {
+        user_id: Number(userId)
+      });
+    }
+
+    closePopup();
+    loadRecrutation();
+  };
+
+  document.getElementById('createGroupBtn').onclick = async () => {
+    await createGroup();
+    closePopup();
+    loadRecrutation();
+  };
 }
 
 /* =========================================================
@@ -43,6 +78,11 @@ async function loadGroups() {
   const container = document.getElementById('groupsList');
   container.innerHTML = '';
 
+  if (!groups.length) {
+    container.innerHTML = '<i>Brak grup</i>';
+    return;
+  }
+
   groups.forEach(group => {
     const div = document.createElement('div');
     div.style.border = '1px solid #ccc';
@@ -52,35 +92,34 @@ async function loadGroups() {
     div.innerHTML = `
       <strong>Grupa #${group.group_id}</strong>
       <div class="graders"></div>
-      <button class="addGraderBtn">Dodaj oceniającego</button>
       <button class="deleteGroupBtn">Usuń grupę</button>
     `;
 
     const gradersDiv = div.querySelector('.graders');
 
-    group.graders_ids.forEach(graderId => {
-      const g = document.createElement('div');
-      g.style.display = 'flex';
-      g.style.justifyContent = 'space-between';
-      g.innerHTML = `
-        <span>Grader ID: ${graderId}</span>
-        <button>Usuń</button>
-      `;
-      g.querySelector('button').onclick = async () => {
-        await del(`/api/grading-group/${group.group_id}/graders/${graderId}`);
-        loadGroups();
-      };
-      gradersDiv.appendChild(g);
-    });
-
-    div.querySelector('.addGraderBtn').onclick = () =>
-      openAddGraderPopup(group.group_id);
+    if (!group.graders_ids.length) {
+      gradersDiv.innerHTML = '<i>Brak oceniających</i>';
+    } else {
+      group.graders_ids.forEach(graderId => {
+        const g = document.createElement('div');
+        g.style.display = 'flex';
+        g.style.justifyContent = 'space-between';
+        g.innerHTML = `
+          <span>Grader ID: ${graderId}</span>
+          <button>Usuń</button>
+        `;
+        g.querySelector('button').onclick = async () => {
+          await del(`/api/grading-group/${group.group_id}/graders/${graderId}`);
+          loadGroups();
+        };
+        gradersDiv.appendChild(g);
+      });
+    }
 
     div.querySelector('.deleteGroupBtn').onclick = async () => {
-      if (confirm('Usunąć całą grupę?')) {
-        await del(`/api/grading-group/${group.group_id}`);
-        loadGroups();
-      }
+      if (!confirm('Usunąć grupę?')) return;
+      await del(`/api/grading-group/${group.group_id}`);
+      loadGroups();
     };
 
     container.appendChild(div);
@@ -89,69 +128,34 @@ async function loadGroups() {
 
 async function createGroup() {
   await post('/api/grading-group', {});
-  loadGroups();
-}
-
-function openAddGraderPopup(groupId) {
-  popupTitle.textContent = `Dodaj oceniającego (grupa ${groupId})`;
-  popupContent.innerHTML = `
-    <input id="graderUserId" type="number" placeholder="ID użytkownika"/>
-  `;
-
-  createBtn.onclick = async () => {
-    const userId = Number(document.getElementById('graderUserId').value);
-    if (!userId) return alert('Podaj ID użytkownika');
-
-    await post(`/api/grading-group/${groupId}/graders`, {
-      user_id: userId
-    });
-
-    closePopup();
-    loadGroups();
-  };
-
-  openPopup();
 }
 
 /* =========================================================
    SUBMISSIONS
 ========================================================= */
 
-async function uploadCsv() {
-  const file = document.getElementById('csvFile').files[0];
-  if (!file) return alert('Wybierz plik CSV');
-
-  const formData = new FormData();
-  formData.append('submissions_file', file);
-
-  await fetch('/api/submission', {
-    method: 'POST',
-    headers: {
-      Authorization: fetchWithAuth.authHeader?.() ?? undefined
-    },
-    body: formData
-  });
-
-  loadSubmissions();
-}
-
 async function loadSubmissions() {
   const submissions = await fetchWithAuth('/api/submission');
-  const list = document.getElementById('submissionsList');
-  list.innerHTML = '';
+  const container = document.getElementById('submissionsList');
+  container.innerHTML = '';
+
+  if (!submissions.length) {
+    container.innerHTML = '<i>Brak zgłoszeń</i>';
+    return;
+  }
 
   submissions.forEach(s => {
     const div = document.createElement('div');
     div.style.borderBottom = '1px solid #eee';
-    div.style.padding = '5px 0';
+    div.style.padding = '4px 0';
     div.innerText =
       `#${s.id} | ${s.submission_number} | grupa: ${s.group_id ?? '—'}`;
-    list.appendChild(div);
+    container.appendChild(div);
   });
 }
 
 async function assignSubmissions() {
-  if (!confirm('Automatycznie przypisać zgłoszenia do grup?')) return;
+  if (!confirm('Przypisać wszystkie zgłoszenia do grup?')) return;
   await post('/api/submission/assign', {});
   loadSubmissions();
 }
