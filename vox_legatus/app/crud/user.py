@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models import User
 from app.schemas.user import UserCreate, UserUpdate
+from app.enums.role import Role
 from typing import List, Optional
 from sqlalchemy.engine import ScalarResult
 
@@ -34,6 +35,15 @@ async def get_user(db: AsyncSession, user_id: Optional[int] = None, email: Optio
         return None
 
     return (await db.scalar(query))
+
+async def get_users_by_role(db: AsyncSession, roles: list[Role]):
+    query = select(User)
+    query = query.where(User.role.in_(roles))
+
+
+    result: ScalarResult[User] = (await db.scalars(query))
+
+    return list(result.all())
 
 
 async def create_user(db: AsyncSession, user: UserCreate):

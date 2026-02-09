@@ -38,6 +38,19 @@ async def get_users(
     # print(users[0].email)
     return users
 
+@router.get("/recrutation", response_model=List[UserRead])
+async def get_recrutation_users(
+        session: Annotated[AsyncSession, Depends(get_db)],
+        admin: User = Depends(require_role(Role.ADMIN)),
+        size: Annotated[int, Query(ge=1, le=10000)] = 1000,
+        offset: Annotated[int, Query(ge=0)] = 0,
+        email: Annotated[Optional[str], Query()] = None
+):
+    print(email)
+    roles = (Role.ADMIN, Role.GRADER)
+    users = (await user_crud.get_users_by_role(session, roles))
+    # print(users[0].email)
+    return users
 
 @router.post("", response_model=UserRead)
 async def create_user(
