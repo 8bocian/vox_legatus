@@ -30,10 +30,19 @@ async def get_graders_groups(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         group_filters: Annotated[GradingGroupFilters, Query()],
         session: Annotated[AsyncSession, Depends(get_db)],
-        group_repo: Annotated[GroupRepo, Depends()]
+        group_repo: Annotated[GroupRepo, Depends()],
+        grader_repo: Annotated[GraderRepo, Depends()]
 ) -> Sequence[GroupRead]:
     groups = await group_repo.get_filter(session, group_filters)
-    return groups
+    graders_groups: list[GroupRead] = []
+    for group in groups:
+        graders = await grader_repo.get_by_group_id(session, group.id)
+        graders_group = GroupRead(
+            group_id=group.id,
+            graders_ids=[grader.id for grader in graders]
+        )
+        groups.append(graders_group)
+    return graders_groups
 
 
 @router.delete("/{group_id}")
@@ -46,17 +55,26 @@ async def remove_group(
     has_removed = await group_repo.remove(session, group_id)
     return has_removed
 
-
-@router.post("/{group_id}/graders")
-async def create_grader(
+@router.post("/{group_id}/graders/{grader_id}")
+async def assign_user(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         grader_to_add: Annotated[CreateGraderRequest, Body()],
         group_id: Annotated[int, Path()],
         session: Annotated[AsyncSession, Depends(get_db)],
         grader_repo: Annotated[GraderRepo, Depends()]
+) -> bool:
+    is_assigned = await grader_repo.assign_user(session, group_id, grader_to_add.user_id)
+    return is_assigned
+
+@router.post("/{group_id}/graders")
+async def create_grader(
+        admin: Annotated[User, Depends(require_role(Role.ADMIN))],
+        group_id: Annotated[int, Path()],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        grader_repo: Annotated[GraderRepo, Depends()]
 ) -> int:
-    grader_group_id = await grader_repo.assign_user(session, group_id, grader_to_add.user_id)
-    return grader_group_id
+    grader_id = await grader_repo.create(session, group_id)
+    return grader_id
 
 
 @router.delete("/{group_id}/graders/{grader_id}")

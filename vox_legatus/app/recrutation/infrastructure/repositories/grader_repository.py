@@ -28,3 +28,10 @@ class GraderRepo:
         )
         graders = graders_results.scalars().all()
         return graders
+
+    async def get_by_group_id(self, session: AsyncSession, group_id: int) -> Sequence[GraderModel]:
+        graders_results = await session.execute(
+            select(GraderModel).where(GraderModel.group_id == group_id)
+        )
+        graders = graders_results.scalars().all()
+        return graders
