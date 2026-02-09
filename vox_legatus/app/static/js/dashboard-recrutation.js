@@ -1,3 +1,5 @@
+import { get, post, del } from './api.js';
+
 export async function loadRecrutation() {
   title.innerHTML = '<h2>Rekrutacja</h2>';
 
