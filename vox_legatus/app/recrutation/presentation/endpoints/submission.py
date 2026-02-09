@@ -19,7 +19,7 @@ from app.recrutation.presentation.schemas.submission import SubmissionCreate, Su
 
 router = APIRouter()
 
-@router.post("/")
+@router.post("")
 async def add_submissions(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         submissions_file: Annotated[UploadFile, File()],
@@ -43,7 +43,7 @@ async def add_submissions(
     return True
 
 
-@router.get("/")
+@router.get("")
 async def get_submissions(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         session: Annotated[AsyncSession, Depends(get_db)],

@@ -15,7 +15,7 @@ from app.recrutation.presentation.schemas.grading_group import GroupRead, Gradin
 
 router = APIRouter()
 
-@router.post("/")
+@router.post("")
 async def create_graders_group(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         session: Annotated[AsyncSession, Depends(get_db)],
@@ -24,7 +24,7 @@ async def create_graders_group(
     created_group_id = await group_repo.create(session)
     return GroupRead(group_id=created_group_id, graders_ids=[])
 
-@router.get("/")
+@router.get("")
 async def get_graders_groups(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         group_filters: Annotated[GradingGroupFilters, Query()],
