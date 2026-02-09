@@ -2,7 +2,6 @@ import csv
 from io import StringIO
 from typing import Annotated, Optional
 
-import pandas as pd
 from fastapi import APIRouter, Body, Depends, Path, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
