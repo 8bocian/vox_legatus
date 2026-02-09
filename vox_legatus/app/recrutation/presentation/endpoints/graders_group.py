@@ -41,7 +41,7 @@ async def get_graders_groups(
             group_id=group.id,
             graders_ids=[grader.id for grader in graders]
         )
-        groups.append(graders_group)
+        graders_groups.append(graders_group)
     return graders_groups
 
 
