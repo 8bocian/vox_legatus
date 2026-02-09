@@ -53,7 +53,7 @@ export function loadRecrutationPopup() {
         alert('Podaj ID grupy i ID użytkownika');
         return;
       }
-      await post(`/api/grading_group/${groupId}/graders`, {
+      await post(`/api/graders_group/${groupId}/graders`, {
         user_id: Number(userId)
       });
     }
@@ -74,7 +74,7 @@ export function loadRecrutationPopup() {
 ========================================================= */
 
 async function loadGroups() {
-  const groups = await fetchWithAuth('/api/grading_group');
+  const groups = await fetchWithAuth('/api/graders_group');
   const container = document.getElementById('groupsList');
   container.innerHTML = '';
 
@@ -109,7 +109,7 @@ async function loadGroups() {
           <button>Usuń</button>
         `;
         g.querySelector('button').onclick = async () => {
-          await del(`/api/grading_group/${group.group_id}/graders/${graderId}`);
+          await del(`/api/graders_group/${group.group_id}/graders/${graderId}`);
           loadGroups();
         };
         gradersDiv.appendChild(g);
@@ -118,7 +118,7 @@ async function loadGroups() {
 
     div.querySelector('.deleteGroupBtn').onclick = async () => {
       if (!confirm('Usunąć grupę?')) return;
-      await del(`/api/grading_group/${group.group_id}`);
+      await del(`/api/graders_group/${group.group_id}`);
       loadGroups();
     };
 
@@ -127,7 +127,7 @@ async function loadGroups() {
 }
 
 async function createGroup() {
-  await post('/api/grading_group', {});
+  await post('/api/graders_group', {});
 }
 
 /* =========================================================
@@ -135,7 +135,7 @@ async function createGroup() {
 ========================================================= */
 
 async function loadSubmissions() {
-  const submissions = await fetchWithAuth('/api/submission');
+  const submissions = await fetchWithAuth('/api/submissions');
   const container = document.getElementById('submissionsList');
   container.innerHTML = '';
 
@@ -156,6 +156,6 @@ async function loadSubmissions() {
 
 async function assignSubmissions() {
   if (!confirm('Przypisać wszystkie zgłoszenia do grup?')) return;
-  await post('/api/submission/assign', {});
+  await post('/api/submissions/assign', {});
   loadSubmissions();
 }
