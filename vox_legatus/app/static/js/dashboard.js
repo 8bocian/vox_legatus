@@ -1,5 +1,5 @@
 import { pollsBtn, usersBtn, openBtn, closeBtn, popup } from './elements.js';
-import { loadRecrutation, loadRecrutationPopup } from './dashboard-recrutation.js';
+import { loadRecrutation } from './dashboard-recrutation.js';
 import { loadPolls, loadPollsPopup } from './dashboard-poll.js';
 import { loadUsers, loadUsersPopup } from './dashboard-user.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
@@ -37,7 +37,6 @@ openBtn.addEventListener('click', () => {
   } else if (currentSection === 'users') {
     loadUsersPopup();
   } else if (currentSection === 'recrutation') {
-    loadRecrutationPopup();
   }
   openPopup();
 });
