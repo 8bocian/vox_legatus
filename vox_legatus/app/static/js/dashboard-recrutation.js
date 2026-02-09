@@ -13,7 +13,6 @@ export async function loadRecrutation() {
         <div id="groupsList" class="groups-list"></div>
       </div>
       <div class="right-column">
-        <!-- Tutaj później kandydaci / zgłoszenia -->
         <div class="placeholder">Lista zgłoszeń / kandydatów – do zrobienia później</div>
       </div>
     </div>
@@ -26,8 +25,6 @@ export async function loadRecrutation() {
   await refreshGroupsList();
 }
 
-// --------------------- Pomocnicze --------------------------------
-
 async function refreshGroupsList() {
   const groupsList = document.getElementById('groupsList');
   if (!groupsList) return;
@@ -35,7 +32,7 @@ async function refreshGroupsList() {
   groupsList.innerHTML = '<div class="loading">Ładowanie grup...</div>';
 
   try {
-    const groups = await get('/api/graders_group');   // zwraca listę GroupRead
+    const groups = await get('/api/graders_group');
 
     groupsList.innerHTML = '';
 
@@ -64,12 +61,10 @@ async function refreshGroupsList() {
 
       groupsList.appendChild(groupDiv);
 
-      // przycisk dodawania gracera
       groupDiv.querySelector('.add-grader-btn').onclick = () => {
         createGraderInGroup(group.group_id);
       };
 
-      // usuwanie grupy
       groupDiv.querySelector('.delete-group').onclick = async (e) => {
         e.stopPropagation();
         if (!confirm(`Na pewno usunąć grupę #${group.group_id}?`)) return;
@@ -78,11 +73,10 @@ async function refreshGroupsList() {
           await del(`/api/graders_group/${group.group_id}`);
           refreshGroupsList();
         } catch (err) {
-          alert('Nie udało się usunąć grupy');
+          alert('Nie udało się usunąć grupy: ' + (err.message || ''));
         }
       };
 
-      // wczytujemy graderów
       await loadGradersForGroup(group.group_id, group.graders_ids);
     }
   } catch (err) {
@@ -125,25 +119,27 @@ async function loadGradersForGroup(groupId, graderIds) {
           </div>
         ` : `
           <div class="action-btn assign-user" data-grader-id="${grader.grader_id}" title="Przypisz użytkownika">
-            <img src="/static/images/add-user.svg" alt="przypisz" /> <!-- dodaj taką ikonę lub użyj plusa -->
+            <img src="/static/images/add.svg" alt="przypisz" />
           </div>
         `}
       `;
 
       container.appendChild(div);
 
-      // zdarzenia
       if (grader.user_id) {
         div.querySelector('.remove-user').onclick = async () => {
           if (!confirm('Odłączyć użytkownika od tego gracera?')) return;
-          // Aktualnie endpoint nie ma bezpośredniego "odłącz", więc albo usuń gracera i stwórz nowego, albo dodaj endpoint
-          // Najprościej na teraz: usuń gracera i dodaj pustego nowego
-          await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
-          refreshGroupsList();
+          // Na razie usuwamy gracera – potem można dodać endpoint do samego odpięcia
+          try {
+            await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
+            refreshGroupsList();
+          } catch (err) {
+            alert('Nie udało się odłączyć: ' + (err.message || ''));
+          }
         };
       } else {
         div.querySelector('.assign-user').onclick = () => {
-          assignUserToGrader(grader.grader_id, groupId);
+          showAssignUserPopup(grader.grader_id, groupId);
         };
       }
     } catch (err) {
@@ -156,10 +152,10 @@ async function loadGradersForGroup(groupId, graderIds) {
 
 async function createNewGradingGroup() {
   try {
-    await post('/api/graders_group', {});   // Twój endpoint nie wymaga ciała
+    await post('/api/graders_group', {});
     refreshGroupsList();
   } catch (err) {
-    alert('Nie udało się utworzyć grupy');
+    alert('Nie udało się utworzyć grupy: ' + (err.message || ''));
   }
 }
 
@@ -168,25 +164,95 @@ async function createGraderInGroup(groupId) {
     await post(`/api/graders_group/${groupId}/graders`, {});
     refreshGroupsList();
   } catch (err) {
-    alert('Nie udało się dodać gracera');
+    alert('Nie udało się dodać gracera: ' + (err.message || ''));
   }
 }
 
-async function assignUserToGrader(graderId, groupId) {
-  // Prosty prompt – w produkcji lepiej zrobić wyszukiwarkę użytkowników lub select
-  const userIdStr = prompt('Podaj ID użytkownika do przypisania:');
-  if (!userIdStr) return;
+// ------------------ Popup przypisania użytkownika ----------------------
 
-  const userId = parseInt(userIdStr, 10);
-  if (!userId || isNaN(userId)) {
-    alert('Nieprawidłowe ID');
+async function showAssignUserPopup(graderId, groupId) {
+  popupTitle.innerHTML = `Przypisz użytkownika do Gradera #${graderId}`;
+
+  let users = [];
+  try {
+    users = await get('/api/user/recrutation');
+  } catch (err) {
+    console.error(err);
+    popupContent.innerHTML = '<div class="error">Nie udało się wczytać listy użytkowników</div>';
+    openPopup();
     return;
   }
 
-  try {
-    await post(`/api/graders_group/${groupId}/graders/${graderId}`, { user_id: userId });
-    refreshGroupsList();
-  } catch (err) {
-    alert('Nie udało się przypisać użytkownika\n' + (err.message || ''));
+  if (users.length === 0) {
+    popupContent.innerHTML = '<div class="empty">Brak dostępnych użytkowników do przypisania</div>';
+    openPopup();
+    return;
   }
+
+  popupContent.innerHTML = `
+    <div class="input search-container">
+      <input id="userSearchInput" type="text" placeholder="Szukaj po imieniu, nazwisku lub email...">
+    </div>
+    <div id="userListContainer" class="user-list-container" style="max-height: 320px; overflow-y: auto; margin: 12px 0;">
+      ${users.map(user => `
+        <div class="user-assign-item" data-user-id="${user.id}">
+          <div class="user-info">
+            <strong>${user.name} ${user.surname}</strong><br>
+            <span class="email">${user.email}</span>
+          </div>
+          <div class="assign-action">
+            <button class="btn small assign-this-user">Przypisz</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  openPopup();
+
+  const searchInput = document.getElementById('userSearchInput');
+  const container = document.getElementById('userListContainer');
+
+  searchInput.oninput = () => {
+    const term = searchInput.value.toLowerCase().trim();
+    const items = container.querySelectorAll('.user-assign-item');
+
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(term) ? '' : 'none';
+    });
+  };
+
+  container.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.assign-this-user');
+    if (!btn) return;
+
+    const item = btn.closest('.user-assign-item');
+    const userId = parseInt(item.dataset.userId, 10);
+
+    if (!userId || isNaN(userId)) return;
+
+    if (!confirm(`Przypisać ${item.querySelector('.user-info').textContent.trim()} ?`)) {
+      return;
+    }
+
+    try {
+      await post(`/api/graders_group/${groupId}/graders/${graderId}`, { user_id: userId });
+      closePopup();
+      refreshGroupsList();
+      Swal.fire({
+        icon: 'success',
+        title: 'Gotowe',
+        text: 'Użytkownik przypisany',
+        timer: 1600,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Błąd',
+        text: 'Nie udało się przypisać\n' + (err.message || '')
+      });
+    }
+  });
 }
