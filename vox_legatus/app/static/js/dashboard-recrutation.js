@@ -1,5 +1,3 @@
-<!-- W dashboard-recrutation.js, funkcja loadRecrutation() -->
-
 export async function loadRecrutation() {
   title.innerHTML = '<h2>Rekrutacja</h2>';
 
