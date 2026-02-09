@@ -107,9 +107,9 @@ def require_role(required_role: Union[Role, list[Role]]):
     def role_checker(current_user: User = Depends(get_current_user)):
         print(current_user.role, required_role)
         if isinstance(required_role, Role):
-            cant_access = current_user.role not in required_role
-        else:
             cant_access = current_user.role != required_role
+        else:
+            cant_access = current_user.role not in required_role
         if cant_access:
             raise HTTPException(status_code=403, detail="Not authorized")
         return current_user
