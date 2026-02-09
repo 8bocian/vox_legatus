@@ -35,3 +35,7 @@ class GraderRepo:
         )
         graders = graders_results.scalars().all()
         return graders
+
+    async def get(self, session: AsyncSession, grader_id: int) -> Optional[GraderModel]:
+        grader = session.get(GraderModel, grader_id)
+        return grader
