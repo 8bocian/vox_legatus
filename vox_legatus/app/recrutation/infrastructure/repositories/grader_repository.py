@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.recrutation.infrastructure.models.grader import GraderModel
 
 class GraderRepo:
-    async def create_grader(self, session: AsyncSession, group_id: int) -> int:
+    async def create(self, session: AsyncSession, group_id: int) -> int:
         grader = GraderModel(group_id=group_id)
         session.add(grader)
         await session.flush()
