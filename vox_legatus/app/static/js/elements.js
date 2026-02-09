@@ -1,3 +1,4 @@
+export const recrutationBtn = document.getElementById('recrutationBtn');
 export const pollsBtn = document.getElementById('pollsBtn');
 export const usersBtn = document.getElementById('usersBtn');
 export const content = document.getElementById('content');

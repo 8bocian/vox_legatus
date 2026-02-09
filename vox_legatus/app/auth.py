@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Union
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
@@ -89,18 +89,29 @@ async def get_current_user_html(
     return user
 
 
-def require_role_html(required_role: Role):
+def require_role_html(required_role: Union[Role, list[Role]]):
     def role_checker(current_user: User = Depends(get_current_user_html)):
-        if current_user.role != required_role:
+        if isinstance(required_role, Role):
+            cant_access = current_user.role not in required_role
+        else:
+            cant_access = current_user.role != required_role
+        if cant_access:
             return RedirectResponse("/login", status_code=302)
+
         return current_user
+
     return role_checker
 
-def require_role(required_role: Role):
+
+def require_role(required_role: Union[Role, list[Role]]):
     def role_checker(current_user: User = Depends(get_current_user)):
         print(current_user.role, required_role)
-        if current_user.role != required_role:
+        if isinstance(required_role, Role):
+            cant_access = current_user.role not in required_role
+        else:
+            cant_access = current_user.role != required_role
+        if cant_access:
             raise HTTPException(status_code=403, detail="Not authorized")
         return current_user
-    return role_checker
 
+    return role_checker

@@ -57,4 +57,7 @@ app.include_router(poll.router, prefix="/api/poll", tags=["poll"])
 app.include_router(question.router, prefix="/api/question", tags=["question"])
 app.include_router(voter.router, prefix="/api/voter", tags=["voter"])
 app.include_router(vote.router, prefix="/api/vote", tags=["vote"])
+app.include_router(vote.router, prefix="/api/submissions", tags=["vote"])
+app.include_router(vote.router, prefix="/api/graders_group", tags=["vote"])
+
 app.include_router(pages.router)

@@ -28,6 +28,8 @@ async def root(
     # Redirect based on role
     if current_user.role == Role.ADMIN:
         return RedirectResponse("/dashboard")
+    elif current_user.role == Role.GRADER:
+        return RedirectResponse("/recrutation")
     else:
         return RedirectResponse("/vote")
 
@@ -58,3 +60,9 @@ async def dashboard(
     if isinstance(user, RedirectResponse):
         return user
     return templates.TemplateResponse("vote.html", {"request": request, "user": user, "timestamp":int(time.time())})
+
+@router.get("/recrutation", response_class=HTMLResponse)
+def login_page(
+        request: Request
+):
+    return templates.TemplateResponse("login.html", {"request": request, "timestamp": int(time.time())})

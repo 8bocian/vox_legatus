@@ -1,4 +1,5 @@
 import { pollsBtn, usersBtn, openBtn, closeBtn, popup } from './elements.js';
+import { loadRecrutation, loadRecrutationPopup } from './dashboard-recrutation.js';
 import { loadPolls, loadPollsPopup } from './dashboard-poll.js';
 import { loadUsers, loadUsersPopup } from './dashboard-user.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
@@ -10,6 +11,11 @@ const logoutBtn = document.getElementById('logoutBtn');
 logoutBtn.addEventListener('click', logout);
 
 const voteBtn = document.getElementById('voteBtn');
+
+recrutationBtn.addEventListener('click', () => {
+  currentSection = 'recrutation';
+  loadRecrutation();
+});
 
 voteBtn.addEventListener('click', () => {
   window.location.href = '/vote';
@@ -30,10 +36,11 @@ openBtn.addEventListener('click', () => {
     loadPollsPopup();
   } else if (currentSection === 'users') {
     loadUsersPopup();
+  } else if (currentSection === 'recrutation') {
+    loadRecrutationPopup();
   }
   openPopup();
 });
-
 
 closeBtn.addEventListener('click', () => {
   if (currentSection === 'polls') {
