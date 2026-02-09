@@ -1,76 +1,40 @@
-import { fetchWithAuth, post, del } from './api.js';
+import { fetchWithAuth, post, put } from './api.js';
 import { title, content, popupTitle, popupContent, createBtn } from './elements.js';
 import { closePopup } from './dashboard-popup.js';
 
 /* =========================================================
-   PUBLIC API – to importuje dashboard
+   PUBLIC API
 ========================================================= */
 
 export async function loadRecrutation() {
-  title.innerHTML = '<h2>Rekrutacja</h2>';
+  title.innerHTML = '<h2>Rekrutacja – grupy oceniających</h2>';
   content.innerHTML = `
-    <div style="display:flex; gap:40px;">
-      <div style="width:45%;">
-        <h3>Grupy oceniających</h3>
+    <div style="display:flex; gap:20px;">
+      <div style="width:35%;">
+        <h3>Grupy</h3>
+        <button id="addGroupBtn">➕ Dodaj grupę</button>
         <div id="groupsList"></div>
       </div>
-
-      <div style="width:55%;">
-        <h3>Zgłoszenia</h3>
-        <div id="submissionsList"></div>
-        <button id="assignBtn">Przypisz zgłoszenia do grup</button>
+      <div style="width:65%;">
+        <i>Kliknij gradera, aby przypisać lub zmienić użytkownika</i>
       </div>
     </div>
   `;
 
-  document.getElementById('assignBtn').onclick = assignSubmissions;
+  document.getElementById('addGroupBtn').onclick = async () => {
+    await post('/api/graders_group', {});
+    loadRecrutation();
+  };
 
   await loadGroups();
-  await loadSubmissions();
 }
 
 export function loadRecrutationPopup() {
-  popupTitle.textContent = 'Zarządzanie rekrutacją';
-  popupContent.innerHTML = `
-    <h4>Dodaj grupę oceniających</h4>
-    <button id="createGroupBtn">➕ Utwórz grupę</button>
-
-    <hr/>
-
-    <h4>Dodaj oceniającego do grupy</h4>
-    <input id="popupGroupId" type="number" placeholder="ID grupy"/>
-    <input id="popupUserId" type="number" placeholder="ID użytkownika"/>
-  `;
-
-  createBtn.onclick = async () => {
-    const groupId = document.getElementById('popupGroupId').value;
-    const userId = document.getElementById('popupUserId').value;
-
-    if (!groupId && !userId) {
-      await createGroup();
-    } else {
-      if (!groupId || !userId) {
-        alert('Podaj ID grupy i ID użytkownika');
-        return;
-      }
-      await post(`/api/graders_group/${groupId}/graders`, {
-        user_id: Number(userId)
-      });
-    }
-
-    closePopup();
-    loadRecrutation();
-  };
-
-  document.getElementById('createGroupBtn').onclick = async () => {
-    await createGroup();
-    closePopup();
-    loadRecrutation();
-  };
+  /* popup otwierany tylko z kliknięcia gradera */
 }
 
 /* =========================================================
-   GROUPS
+   GROUPS & GRADERS
 ========================================================= */
 
 async function loadGroups() {
@@ -84,78 +48,78 @@ async function loadGroups() {
   }
 
   groups.forEach(group => {
-    const div = document.createElement('div');
-    div.style.border = '1px solid #ccc';
-    div.style.padding = '10px';
-    div.style.marginBottom = '10px';
+    const box = document.createElement('div');
+    box.style.border = '1px solid #ccc';
+    box.style.padding = '10px';
+    box.style.marginBottom = '10px';
 
-    div.innerHTML = `
+    box.innerHTML = `
       <strong>Grupa #${group.group_id}</strong>
       <div class="graders"></div>
-      <button class="deleteGroupBtn">Usuń grupę</button>
+      <button class="addGraderBtn">➕ Dodaj gradera</button>
     `;
 
-    const gradersDiv = div.querySelector('.graders');
+    const gradersDiv = box.querySelector('.graders');
 
-    if (!group.graders_ids.length) {
-      gradersDiv.innerHTML = '<i>Brak oceniających</i>';
+    if (!group.graders?.length) {
+      gradersDiv.innerHTML = '<i>Brak graderów</i>';
     } else {
-      group.graders_ids.forEach(graderId => {
+      group.graders.forEach(grader => {
         const g = document.createElement('div');
-        g.style.display = 'flex';
-        g.style.justifyContent = 'space-between';
-        g.innerHTML = `
-          <span>Grader ID: ${graderId}</span>
-          <button>Usuń</button>
-        `;
-        g.querySelector('button').onclick = async () => {
-          await del(`/api/graders_group/${group.group_id}/graders/${graderId}`);
-          loadGroups();
-        };
+        g.style.cursor = 'pointer';
+        g.style.padding = '4px';
+        g.style.borderBottom = '1px solid #eee';
+
+        g.innerText = grader.user
+          ? `${grader.user.name} ${grader.user.surname} (${grader.user.email})`
+          : '— pusty grader —';
+
+        g.onclick = () => openGraderPopup(grader);
         gradersDiv.appendChild(g);
       });
     }
 
-    div.querySelector('.deleteGroupBtn').onclick = async () => {
-      if (!confirm('Usunąć grupę?')) return;
-      await del(`/api/graders_group/${group.group_id}`);
-      loadGroups();
+    box.querySelector('.addGraderBtn').onclick = async () => {
+      await post(`/api/graders_group/${group.group_id}/graders`, {});
+      loadRecrutation();
     };
 
-    container.appendChild(div);
+    container.appendChild(box);
   });
-}
-
-async function createGroup() {
-  await post('/api/graders_group', {});
 }
 
 /* =========================================================
-   SUBMISSIONS
+   GRADER POPUP – ASSIGN / CHANGE USER
 ========================================================= */
 
-async function loadSubmissions() {
-  const submissions = await fetchWithAuth('/api/submissions');
-  const container = document.getElementById('submissionsList');
-  container.innerHTML = '';
+async function openGraderPopup(grader) {
+  const users = await fetchWithAuth('/api/user/recrutation');
 
-  if (!submissions.length) {
-    container.innerHTML = '<i>Brak zgłoszeń</i>';
-    return;
-  }
+  popupTitle.textContent = 'Przypisz użytkownika do gradera';
+  popupContent.innerHTML = `
+    <div id="usersList" style="max-height:300px; overflow:auto;"></div>
+  `;
 
-  submissions.forEach(s => {
+  const list = document.getElementById('usersList');
+
+  users.forEach(user => {
     const div = document.createElement('div');
+    div.style.cursor = 'pointer';
+    div.style.padding = '6px';
     div.style.borderBottom = '1px solid #eee';
-    div.style.padding = '4px 0';
-    div.innerText =
-      `#${s.id} | ${s.submission_number} | grupa: ${s.group_id ?? '—'}`;
-    container.appendChild(div);
-  });
-}
 
-async function assignSubmissions() {
-  if (!confirm('Przypisać wszystkie zgłoszenia do grup?')) return;
-  await post('/api/submissions/assign', {});
-  loadSubmissions();
+    div.innerText = `${user.name} ${user.surname} – ${user.email}`;
+
+    div.onclick = async () => {
+      await put(`/api/submissions/grader/${grader.id}`, {
+        user_id: user.id
+      });
+      closePopup();
+      loadRecrutation();
+    };
+
+    list.appendChild(div);
+  });
+
+  createBtn.onclick = () => closePopup();
 }
