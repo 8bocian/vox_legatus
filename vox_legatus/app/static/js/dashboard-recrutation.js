@@ -1,129 +1,192 @@
-// dashboard-recrutation.js
-import { fetchWithAuth, post, del } from './api.js';
-import { popupTitle, popupContent, createBtn } from './elements.js';
-import { openPopup, closePopup } from './dashboard-popup.js';
+<!-- W dashboard-recrutation.js, funkcja loadRecrutation() -->
 
 export async function loadRecrutation() {
-  const container = document.getElementById('content');
-  container.innerHTML = `
-    <div style="display:flex; flex-direction:column;" id="groupsList"></div>
-    <button id="addGroupBtn" style="margin-top:10px;">➕ Dodaj grupę</button>
+  title.innerHTML = '<h2>Rekrutacja</h2>';
+
+  content.innerHTML = `
+    <div class="recrutation-layout">
+      <div class="left-column">
+        <div class="column-header">
+          <h3>Grupy oceniające</h3>
+          <div id="addGroupBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj grupę" /></div>
+        </div>
+        <div id="groupsList" class="groups-list"></div>
+      </div>
+      <div class="right-column">
+        <!-- Tutaj później kandydaci / zgłoszenia -->
+        <div class="placeholder">Lista zgłoszeń / kandydatów – do zrobienia później</div>
+      </div>
+    </div>
   `;
 
-  const addGroupBtn = document.getElementById('addGroupBtn');
-  addGroupBtn.onclick = async () => {
-    await post('/api/graders_group'); // tworzy nową grupę
-    loadRecrutation();
+  document.getElementById('addGroupBtn').onclick = () => {
+    createNewGradingGroup();
   };
 
+  await refreshGroupsList();
+}
+
+// --------------------- Pomocnicze --------------------------------
+
+async function refreshGroupsList() {
   const groupsList = document.getElementById('groupsList');
-  const groups = await fetchWithAuth('/api/graders_group');
+  if (!groupsList) return;
 
-  if (!groups.length) {
-    groupsList.innerHTML = '<i>Brak grup</i>';
-    return;
-  }
+  groupsList.innerHTML = '<div class="loading">Ładowanie grup...</div>';
 
-  for (const group of groups) {
-    const box = document.createElement('div');
-    box.style.border = '1px solid #ccc';
-    box.style.padding = '10px';
-    box.style.marginBottom = '10px';
-    box.style.position = 'relative';
+  try {
+    const groups = await get('/api/graders_group');   // zwraca listę GroupRead
 
-    box.innerHTML = `
-      <strong>Grupa #${group.group_id}</strong>
-      <button class="removeGroupBtn" style="position:absolute; right:10px; top:10px;">🗑 Usuń grupę</button>
-      <div class="graders" style="margin-top:10px;"></div>
-      <button class="addGraderBtn" style="margin-top:5px;">➕ Dodaj gradera</button>
-    `;
+    groupsList.innerHTML = '';
 
-    const gradersDiv = box.querySelector('.graders');
-
-    // Pobieramy pełne dane graderów
-    if (!group.graders_ids?.length) {
-      gradersDiv.innerHTML = '<i>Brak graderów</i>';
-    } else {
-      for (const grader_id of group.graders_ids) {
-        const graderData = await fetchWithAuth(`/api/graders_group/${grader_id}`);
-        let userData = null;
-        if (graderData.user_id) {
-          userData = await fetchWithAuth(`/api/user/${graderData.user_id}`);
-        }
-
-        const g = document.createElement('div');
-        g.style.cursor = 'pointer';
-        g.style.padding = '4px';
-        g.style.borderBottom = '1px solid #eee';
-        g.style.display = 'flex';
-        g.style.justifyContent = 'space-between';
-        g.style.alignItems = 'center';
-
-        const text = document.createElement('span');
-        text.innerText = userData
-          ? `${userData.name} ${userData.surname} (${userData.email})`
-          : '— pusty grader —';
-        text.onclick = () => loadRecrutationPopup(group.group_id, grader_id);
-
-        const removeBtn = document.createElement('button');
-        removeBtn.innerText = '🗑';
-        removeBtn.onclick = async () => {
-          if (!confirm('Czy na pewno chcesz usunąć tego gradera?')) return;
-          await del(`/api/graders_group/${group.group_id}/graders/${grader_id}`);
-          loadRecrutation();
-        };
-
-        g.appendChild(text);
-        g.appendChild(removeBtn);
-        gradersDiv.appendChild(g);
-      }
+    if (groups.length === 0) {
+      groupsList.innerHTML = '<div class="empty">Brak grup oceniających</div>';
+      return;
     }
 
-    // Dodawanie nowego grader-a
-    box.querySelector('.addGraderBtn').onclick = async () => {
-      await post(`/api/graders_group/${group.group_id}/graders`);
-      loadRecrutation();
-    };
+    for (const group of groups) {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'group-card';
+      groupDiv.innerHTML = `
+        <div class="group-header">
+          <div>Grupa #${group.group_id}</div>
+          <div class="action-btn delete-group" data-group-id="${group.group_id}" title="Usuń grupę">
+            <img src="/static/images/bin.svg" alt="usuń" />
+          </div>
+        </div>
+        <div class="grader-list" id="graders-in-group-${group.group_id}"></div>
+        <div style="margin-top:10px;">
+          <button class="btn small add-grader-btn" data-group-id="${group.group_id}">
+            + Dodaj gracera
+          </button>
+        </div>
+      `;
 
-    // Usuwanie grupy
-    box.querySelector('.removeGroupBtn').onclick = async () => {
-      if (!confirm('Czy na pewno chcesz usunąć całą grupę?')) return;
-      await del(`/api/graders_group/${group.group_id}`);
-      loadRecrutation();
-    };
+      groupsList.appendChild(groupDiv);
 
-    groupsList.appendChild(box);
+      // przycisk dodawania gracera
+      groupDiv.querySelector('.add-grader-btn').onclick = () => {
+        createGraderInGroup(group.group_id);
+      };
+
+      // usuwanie grupy
+      groupDiv.querySelector('.delete-group').onclick = async (e) => {
+        e.stopPropagation();
+        if (!confirm(`Na pewno usunąć grupę #${group.group_id}?`)) return;
+
+        try {
+          await del(`/api/graders_group/${group.group_id}`);
+          refreshGroupsList();
+        } catch (err) {
+          alert('Nie udało się usunąć grupy');
+        }
+      };
+
+      // wczytujemy graderów
+      await loadGradersForGroup(group.group_id, group.graders_ids);
+    }
+  } catch (err) {
+    console.error(err);
+    groupsList.innerHTML = 'Błąd ładowania grup';
   }
 }
 
-// Popup do przypisywania usera do grader-a
-export async function loadRecrutationPopup(group_id, grader_id) {
-  const users = await fetchWithAuth('/api/user/recrutation');
+async function loadGradersForGroup(groupId, graderIds) {
+  const container = document.getElementById(`graders-in-group-${groupId}`);
+  if (!container) return;
 
-  popupTitle.textContent = 'Przypisz użytkownika do gradera';
-  popupContent.innerHTML = `<div id="usersList" style="max-height:300px; overflow:auto;"></div>`;
+  container.innerHTML = '';
 
-  const list = document.getElementById('usersList');
+  if (graderIds.length === 0) {
+    container.innerHTML = '<div class="grader-item grader-empty">Brak graderów w grupie</div>';
+    return;
+  }
 
-  users.forEach(user => {
-    const div = document.createElement('div');
-    div.style.cursor = 'pointer';
-    div.style.padding = '6px';
-    div.style.borderBottom = '1px solid #eee';
+  for (const graderId of graderIds) {
+    try {
+      const grader = await get(`/api/grader/${graderId}`);
 
-    div.innerText = `${user.name} ${user.surname} – ${user.email}`;
+      let userInfo = 'brak użytkownika';
+      let className = 'grader-empty';
 
-    div.onclick = async () => {
-      await post(`/api/graders_group/${group_id}/graders/${grader_id}`, {
-        user_id: user.id
-      });
-      closePopup();
-      loadRecrutation();
-    };
+      if (grader.user_id) {
+        const user = await get(`/api/user/${grader.user_id}`);
+        userInfo = `${user.name} ${user.surname} (${user.email})`;
+        className = 'grader-assigned';
+      }
 
-    list.appendChild(div);
-  });
+      const div = document.createElement('div');
+      div.className = `grader-item ${className}`;
+      div.innerHTML = `
+        <div>Grader #${grader.grader_id} – ${userInfo}</div>
+        ${grader.user_id ? `
+          <div class="action-btn remove-user" data-grader-id="${grader.grader_id}" title="Odłącz użytkownika">
+            <img src="/static/images/delete.svg" alt="odłącz" />
+          </div>
+        ` : `
+          <div class="action-btn assign-user" data-grader-id="${grader.grader_id}" title="Przypisz użytkownika">
+            <img src="/static/images/add-user.svg" alt="przypisz" /> <!-- dodaj taką ikonę lub użyj plusa -->
+          </div>
+        `}
+      `;
 
-  createBtn.onclick = () => closePopup();
-  openPopup();
+      container.appendChild(div);
+
+      // zdarzenia
+      if (grader.user_id) {
+        div.querySelector('.remove-user').onclick = async () => {
+          if (!confirm('Odłączyć użytkownika od tego gracera?')) return;
+          // Aktualnie endpoint nie ma bezpośredniego "odłącz", więc albo usuń gracera i stwórz nowego, albo dodaj endpoint
+          // Najprościej na teraz: usuń gracera i dodaj pustego nowego
+          await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
+          refreshGroupsList();
+        };
+      } else {
+        div.querySelector('.assign-user').onclick = () => {
+          assignUserToGrader(grader.grader_id, groupId);
+        };
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+}
+
+// ------------------ Akcje ----------------------
+
+async function createNewGradingGroup() {
+  try {
+    await post('/api/graders_group', {});   // Twój endpoint nie wymaga ciała
+    refreshGroupsList();
+  } catch (err) {
+    alert('Nie udało się utworzyć grupy');
+  }
+}
+
+async function createGraderInGroup(groupId) {
+  try {
+    await post(`/api/graders_group/${groupId}/graders`, {});
+    refreshGroupsList();
+  } catch (err) {
+    alert('Nie udało się dodać gracera');
+  }
+}
+
+async function assignUserToGrader(graderId, groupId) {
+  // Prosty prompt – w produkcji lepiej zrobić wyszukiwarkę użytkowników lub select
+  const userIdStr = prompt('Podaj ID użytkownika do przypisania:');
+  if (!userIdStr) return;
+
+  const userId = parseInt(userIdStr, 10);
+  if (!userId || isNaN(userId)) {
+    alert('Nieprawidłowe ID');
+    return;
+  }
+
+  try {
+    await post(`/api/graders_group/${groupId}/graders/${graderId}`, { user_id: userId });
+    refreshGroupsList();
+  } catch (err) {
+    alert('Nie udało się przypisać użytkownika\n' + (err.message || ''));
+  }
 }
