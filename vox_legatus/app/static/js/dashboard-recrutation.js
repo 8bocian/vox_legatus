@@ -1,9 +1,8 @@
 // dashboard-recrutation.js
-import { fetchWithAuth, post } from './api.js';
+import { fetchWithAuth, post, del } from './api.js';
 import { popupTitle, popupContent, createBtn } from './elements.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
 
-// Funkcja główna ładująca listę grup
 export async function loadRecrutation() {
   const container = document.getElementById('content');
   container.innerHTML = `
@@ -14,7 +13,7 @@ export async function loadRecrutation() {
   const addGroupBtn = document.getElementById('addGroupBtn');
   addGroupBtn.onclick = async () => {
     await post('/api/graders_group'); // tworzy nową grupę
-    loadRecrutation(); // odśwież listę
+    loadRecrutation();
   };
 
   const groupsList = document.getElementById('groupsList');
@@ -25,49 +24,80 @@ export async function loadRecrutation() {
     return;
   }
 
-  groups.forEach(group => {
+  for (const group of groups) {
     const box = document.createElement('div');
     box.style.border = '1px solid #ccc';
     box.style.padding = '10px';
     box.style.marginBottom = '10px';
+    box.style.position = 'relative';
 
     box.innerHTML = `
       <strong>Grupa #${group.group_id}</strong>
-      <div class="graders"></div>
-      <button class="addGraderBtn">➕ Dodaj gradera</button>
+      <button class="removeGroupBtn" style="position:absolute; right:10px; top:10px;">🗑 Usuń grupę</button>
+      <div class="graders" style="margin-top:10px;"></div>
+      <button class="addGraderBtn" style="margin-top:5px;">➕ Dodaj gradera</button>
     `;
 
     const gradersDiv = box.querySelector('.graders');
 
-    if (!group.graders?.length) {
+    // Pobieramy pełne dane graderów
+    if (!group.graders_ids?.length) {
       gradersDiv.innerHTML = '<i>Brak graderów</i>';
     } else {
-      group.graders.forEach(grader => {
+      for (const grader_id of group.graders_ids) {
+        const graderData = await fetchWithAuth(`/api/graders_group/${grader_id}`);
+        let userData = null;
+        if (graderData.user_id) {
+          userData = await fetchWithAuth(`/api/user/${graderData.user_id}`);
+        }
+
         const g = document.createElement('div');
         g.style.cursor = 'pointer';
         g.style.padding = '4px';
         g.style.borderBottom = '1px solid #eee';
+        g.style.display = 'flex';
+        g.style.justifyContent = 'space-between';
+        g.style.alignItems = 'center';
 
-        g.innerText = grader.user
-          ? `${grader.user.name} ${grader.user.surname} (${grader.user.email})`
+        const text = document.createElement('span');
+        text.innerText = userData
+          ? `${userData.name} ${userData.surname} (${userData.email})`
           : '— pusty grader —';
+        text.onclick = () => loadRecrutationPopup(group.group_id, grader_id);
 
-        g.onclick = () => loadRecrutationPopup(group.group_id, grader);
+        const removeBtn = document.createElement('button');
+        removeBtn.innerText = '🗑';
+        removeBtn.onclick = async () => {
+          if (!confirm('Czy na pewno chcesz usunąć tego gradera?')) return;
+          await del(`/api/graders_group/${group.group_id}/graders/${grader_id}`);
+          loadRecrutation();
+        };
+
+        g.appendChild(text);
+        g.appendChild(removeBtn);
         gradersDiv.appendChild(g);
-      });
+      }
     }
 
+    // Dodawanie nowego grader-a
     box.querySelector('.addGraderBtn').onclick = async () => {
       await post(`/api/graders_group/${group.group_id}/graders`);
       loadRecrutation();
     };
 
+    // Usuwanie grupy
+    box.querySelector('.removeGroupBtn').onclick = async () => {
+      if (!confirm('Czy na pewno chcesz usunąć całą grupę?')) return;
+      await del(`/api/graders_group/${group.group_id}`);
+      loadRecrutation();
+    };
+
     groupsList.appendChild(box);
-  });
+  }
 }
 
 // Popup do przypisywania usera do grader-a
-export async function loadRecrutationPopup(group_id, grader) {
+export async function loadRecrutationPopup(group_id, grader_id) {
   const users = await fetchWithAuth('/api/user/recrutation');
 
   popupTitle.textContent = 'Przypisz użytkownika do gradera';
@@ -84,7 +114,7 @@ export async function loadRecrutationPopup(group_id, grader) {
     div.innerText = `${user.name} ${user.surname} – ${user.email}`;
 
     div.onclick = async () => {
-      await post(`/api/graders_group/${group_id}/graders/${grader.id}`, {
+      await post(`/api/graders_group/${group_id}/graders/${grader_id}`, {
         user_id: user.id
       });
       closePopup();
