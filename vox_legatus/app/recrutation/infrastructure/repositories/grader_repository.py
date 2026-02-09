@@ -9,7 +9,7 @@ class GraderRepo:
     async def create_grader(self, session: AsyncSession, group_id: int) -> int:
         grader = GraderModel(group_id=group_id)
         session.add(grader)
-        await session.refresh(grader)
+        await session.flush(grader)
         return grader.id
 
     async def assign_user(self, session: AsyncSession, grader_id:int, user_id: int) -> bool:

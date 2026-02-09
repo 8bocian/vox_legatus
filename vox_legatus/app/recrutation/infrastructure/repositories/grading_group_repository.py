@@ -10,7 +10,7 @@ class GroupRepo:
     async def create(self, session: AsyncSession) -> GradingGroupModel:
         grading_group = GradingGroupModel()
         session.add(grading_group)
-        await session.refresh(grading_group)
+        await session.flush(grading_group)
         return grading_group
 
     async def get_filter(self, session: AsyncSession, filters: Optional[GradingGroupFilters]=None) -> Sequence[GradingGroupModel]:
@@ -27,7 +27,7 @@ class GroupRepo:
         group = await session.get(GradingGroupModel, group_id)
         if group:
             group.graders_count = group_update.graders_count
-            await session.refresh(group)
+            await session.flush()
         return group
 
 

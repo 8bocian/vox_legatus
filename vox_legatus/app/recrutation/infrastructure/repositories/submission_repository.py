@@ -18,7 +18,7 @@ class SubmissionRepo:
             subject_2_answer=create_submission.subject_2_answer,
         )
         session.add(submission)
-        await session.refresh(submission)
+        await session.flush(submission)
         return submission.id
 
     async def get_all(self, session: AsyncSession) -> Sequence[SubmissionModel]:
