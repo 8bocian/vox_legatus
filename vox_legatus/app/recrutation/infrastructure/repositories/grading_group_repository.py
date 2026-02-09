@@ -7,11 +7,11 @@ from app.recrutation.presentation.schemas.grading_group import GroupCreateReques
 
 class GroupRepo:
 
-    async def create(self, session: AsyncSession) -> GradingGroupModel:
+    async def create(self, session: AsyncSession) -> int:
         grading_group = GradingGroupModel()
         session.add(grading_group)
         await session.flush()
-        return grading_group
+        return grading_group.id
 
     async def get_filter(self, session: AsyncSession, filters: Optional[GradingGroupFilters]=None) -> Sequence[GradingGroupModel]:
         if not filters:
