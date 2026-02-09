@@ -9,7 +9,7 @@ from app.enums.role import Role
 from app.models.user import User
 from app.recrutation.infrastructure.repositories.grading_group_repository import GroupRepo
 from app.recrutation.infrastructure.repositories.grader_repository import GraderRepo
-from app.recrutation.presentation.schemas.grader import CreateGraderRequest
+from app.recrutation.presentation.schemas.grader import CreateGraderRequest, GraderRead
 from app.recrutation.presentation.schemas.grading_group import GroupRead, GradingGroupFilters
 
 

@@ -3,7 +3,7 @@ from app.auth import hash_password
 from app.enums import Role
 from app.models import User
 from app.routers import auth, user, poll, question, vote, voter
-from app.recrutation.presentation.endpoints import submission, graders_group
+from app.recrutation.presentation.endpoints import submission, graders_group, grader
 from app.web import pages
 from app.database import get_db, async_engine, Base
 from sqlalchemy.future import select
@@ -60,5 +60,6 @@ app.include_router(voter.router, prefix="/api/voter", tags=["voter"])
 app.include_router(vote.router, prefix="/api/vote", tags=["vote"])
 app.include_router(submission.router, prefix="/api/submissions", tags=["submissions"])
 app.include_router(graders_group.router, prefix="/api/graders_group", tags=["graders_group"])
+app.include_router(grader.router, prefix="/api/grader", tags=["grader"])
 
 app.include_router(pages.router)
