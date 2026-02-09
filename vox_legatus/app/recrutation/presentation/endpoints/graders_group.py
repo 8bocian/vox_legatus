@@ -24,6 +24,7 @@ async def create_graders_group(
     created_group_id = await group_repo.create(session)
     return GroupRead(group_id=created_group_id, graders_ids=[])
 
+
 @router.get("")
 async def get_graders_groups(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
@@ -33,6 +34,7 @@ async def get_graders_groups(
 ) -> Sequence[GroupRead]:
     groups = await group_repo.get_filter(session, group_filters)
     return groups
+
 
 @router.delete("/{group_id}")
 async def remove_group(
@@ -67,4 +69,3 @@ async def remove_grader_from_group(
 ) -> bool:
     has_removed = await grader_repo.delete(session, grader_id)
     return has_removed
-

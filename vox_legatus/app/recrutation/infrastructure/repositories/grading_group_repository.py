@@ -14,13 +14,11 @@ class GroupRepo:
         return grading_group.id
 
     async def get_filter(self, session: AsyncSession, filters: Optional[GradingGroupFilters]=None) -> Sequence[GradingGroupModel]:
-        if not filters:
-            groups_result = await session.execute(
-                select(GradingGroupModel)
-            )
-            groups = groups_result.scalars().all()
-        else:
-            groups = []
+        groups_result = await session.execute(
+            select(GradingGroupModel)
+        )
+        groups = groups_result.scalars().all()
+
         return groups
 
     async def update(self, session: AsyncSession, group_id: int, group_update: GroupUpdateRequest) -> Optional[GradingGroupModel]:
