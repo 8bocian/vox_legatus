@@ -37,5 +37,5 @@ class GraderRepo:
         return graders
 
     async def get(self, session: AsyncSession, grader_id: int) -> Optional[GraderModel]:
-        grader = session.get(GraderModel, grader_id)
+        grader = await session.get(GraderModel, grader_id)
         return grader
