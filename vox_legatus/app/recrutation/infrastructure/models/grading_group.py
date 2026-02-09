@@ -10,3 +10,9 @@ class GradingGroupModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, index=True, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
+    graders = relationship(
+        "GraderModel",
+        backref="group",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
