@@ -92,9 +92,9 @@ async def get_current_user_html(
 def require_role_html(required_role: Union[Role, list[Role]]):
     def role_checker(current_user: User = Depends(get_current_user_html)):
         if isinstance(required_role, Role):
-            cant_access = current_user.role not in required_role
-        else:
             cant_access = current_user.role != required_role
+        else:
+            cant_access = current_user.role not in required_role
         if cant_access:
             return RedirectResponse("/login", status_code=302)
 
