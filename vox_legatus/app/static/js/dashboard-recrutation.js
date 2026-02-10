@@ -11,7 +11,7 @@ function escapeHtml(unsafe) {
 }
 
 // ──────────────────────────────────────────────────────
-// Główna funkcja ładowania zakładki Rekrutacja
+// Główna funkcja (zmodyfikowana)
 // ──────────────────────────────────────────────────────
 export async function loadRecrutation() {
   title.innerHTML = '<h2>Rekrutacja</h2>';
@@ -20,28 +20,151 @@ export async function loadRecrutation() {
     <div class="recrutation-tabs">
       <button class="tab-btn active" data-tab="groups">Grupy oceniające</button>
       <button class="tab-btn" data-tab="submissions">Zgłoszenia</button>
+      <button class="tab-btn" data-tab="results">Wyniki</button>
     </div>
 
     <div id="tabContent" class="tab-content"></div>
   `;
 
-  // obsługa przełączania zakładek
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
       const tab = btn.dataset.tab;
-      if (tab === 'groups') {
-        renderGroupsTab();
-      } else if (tab === 'submissions') {
-        renderSubmissionsTab();
-      }
+      if (tab === 'groups')       renderGroupsTab();
+      else if (tab === 'submissions') renderSubmissionsTab();
+      else if (tab === 'results')     renderResultsTab();
     });
   });
 
-  // domyślnie otwieramy grupy
+  // domyślnie grupy
   renderGroupsTab();
+}
+
+// ──────────────────────────────────────────────────────
+// Zakładka: Wyniki
+// ──────────────────────────────────────────────────────
+async function renderResultsTab() {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = `
+    <div class="column full-width">
+      <div class="column-header">
+        <h3>Wyniki ocen</h3>
+      </div>
+
+      <div class="search-container">
+        <input
+          type="text"
+          id="resultsSearch"
+          placeholder="Filtruj po numerze zgłoszenia..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div class="search-icon">🔍</div>
+      </div>
+
+      <div id="resultsList" class="submissions-list"></div>
+    </div>
+  `;
+
+  const searchInput = document.getElementById('resultsSearch');
+  let debounceTimer = null;
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadResults(searchInput.value.trim());
+    }, 400);
+  });
+
+  await loadResults();
+}
+
+async function loadResults(search = '') {
+  const container = document.getElementById('resultsList');
+  if (!container) return;
+
+  container.innerHTML = '<div class="loading">Ładowanie wyników...</div>';
+
+  try {
+    const url = search.trim()
+      ? `/api/submissions?search=${encodeURIComponent(search.trim())}`
+      : '/api/submissions';
+
+    const submissions = await get(url);
+
+    container.innerHTML = '';
+
+    if (submissions.length === 0) {
+      container.innerHTML = search.trim()
+        ? `<div class="empty">Brak wyników pasujących do "${escapeHtml(search)}"</div>`
+        : '<div class="empty">Brak ocenionych zgłoszeń</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'submissions-table results-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Nr zgłoszenia</th>
+          <th>Temat 1</th>
+          <th>Temat 2</th>
+          <th>Grupa</th>
+          <th>Oceny</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    for (const sub of submissions) {
+      // pobieramy oceny dla tego zgłoszenia
+      let gradesInfo = '—';
+      let gradesCount = 0;
+
+      try {
+        const grades = await get(`/api/submissions/${sub.id}/grades`);
+        gradesCount = grades.length;
+        if (grades.length > 0) {
+          const avg = grades.reduce((sum, g) => sum + g.grade, 0) / grades.length;
+          gradesInfo = `${grades.length} × średnia: ${avg.toFixed(2)}`;
+        }
+      } catch (err) {
+        console.warn(`Nie udało się pobrać ocen dla submission ${sub.id}`, err);
+      }
+
+      const row = document.createElement('tr');
+      row.className = 'submission-row clickable';
+
+      row.innerHTML = `
+        <td>${escapeHtml(sub.submission_number || '-')}</td>
+        <td title="${escapeHtml(sub.subject_1 || '')}">
+          ${escapeHtml(sub.subject_1?.substring(0, 70) || '-')}${sub.subject_1?.length > 70 ? '...' : ''}
+        </td>
+        <td title="${escapeHtml(sub.subject_2 || '')}">
+          ${escapeHtml(sub.subject_2?.substring(0, 70) || '-')}${sub.subject_2?.length > 70 ? '...' : ''}
+        </td>
+        <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
+        <td class="${gradesCount > 0 ? 'has-grades' : ''}">
+          ${gradesInfo}
+        </td>
+      `;
+
+      row.addEventListener('click', () => {
+        showSubmissionDetailPopup(sub);
+      });
+
+      tbody.appendChild(row);
+    }
+
+    container.appendChild(table);
+  } catch (err) {
+    console.error('Błąd ładowania wyników:', err);
+    container.innerHTML = '<div class="error">Błąd ładowania wyników</div>';
+  }
 }
 
 // ──────────────────────────────────────────────────────

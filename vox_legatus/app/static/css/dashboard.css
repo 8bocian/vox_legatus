@@ -675,3 +675,42 @@ input:checked + .slider:before {
 .submissions-table td[title] {
   cursor: help;
 }
+
+.grades-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.grades-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grade-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.95em;
+}
+
+.grade-item .grader {
+  font-weight: 500;
+  color: #444;
+}
+
+.grade-item .grade-value {
+  font-weight: bold;
+  color: #2e7d32;
+  min-width: 60px;
+  text-align: right;
+}
+
+.results-table .has-grades {
+  font-weight: 500;
+  color: #2e7d32;
+}

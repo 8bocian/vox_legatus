@@ -1,6 +1,6 @@
 import csv
 from io import StringIO
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +15,8 @@ from app.recrutation.infrastructure.repositories.grader_repository import Grader
 from app.recrutation.infrastructure.repositories.grading_group_repository import GroupRepo
 from app.recrutation.infrastructure.repositories.submission_repository import SubmissionRepo
 from app.recrutation.presentation.schemas.submission import SubmissionCreate, SubmissionRead, SubmissionGradeRequest
+from app.recrutation.presentation.schemas.grade import GradeRead
+from app.crud import user as user_crud
 
 router = APIRouter()
 
@@ -90,6 +92,29 @@ async def get_submission(
     else:
         return None
 
+@router.get("/{submission_id}/grades")
+async def get_submission_grades(
+        user: Annotated[User, Depends(require_role([Role.GRADER, Role.ADMIN]))],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        submission_id: Annotated[int, Path()],
+        submission_repo: Annotated[SubmissionRepo, Depends()],
+        grader_repo: Annotated[GraderRepo, Depends()],
+        grade_repo: Annotated[GradeRepo, Depends()]
+) -> Sequence[GradeRead]:
+    grades = await grade_repo.get_for_submission(session, submission_id)
+    grades_real: list[GradeRead] = []
+    for grade in grades:
+        grader = await grader_repo.get(session, grade.grader_id)
+        user = await user_crud.get_user(session, grader.user_id)
+        grades_real.append(
+            GradeRead(
+                username=f"{user.name} {user.surname}",
+                grade=grade.grade,
+                grader_id=grader.id,
+                grade_id=grade.id
+            )
+        )
+    return grades_real
 
 @router.post("/{submission_id}/grade")
 async def grade_submission(
