@@ -13,11 +13,20 @@ class GradeRepo:
         )
         return grades_result.scalar_one_or_none()
 
+
+    async def get_for_grader(self, session: AsyncSession, grader_id: int) -> Sequence[GradeModel]:
+        grades_result = await session.execute(
+            select(GradeModel).where(GradeModel.grader_id == grader_id)
+        )
+        return grades_result.scalars().all()
+
+
     async def get_for_submission(self, session: AsyncSession, submission_id: int) -> Sequence[GradeModel]:
         grades_result = await session.execute(
             select(GradeModel).where(GradeModel.submission_id == submission_id)
         )
         return grades_result.scalars().all()
+
 
     async def create(self, session: AsyncSession, submission_id: int, grader_id: int, grade: float):
         grade = GradeModel(
@@ -29,3 +38,8 @@ class GradeRepo:
 
     async def delete_all(self, session: AsyncSession):
         await session.execute(delete(GradeModel))
+
+
+    async def delete(self, session: AsyncSession, grade_id: int):
+        grade = await session.get(GradeModel, grade_id)
+        await session.delete(grade)

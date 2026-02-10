@@ -9,9 +9,9 @@ from app.enums.role import Role
 from app.models.user import User
 from app.recrutation.infrastructure.repositories.grading_group_repository import GroupRepo
 from app.recrutation.infrastructure.repositories.grader_repository import GraderRepo
+from app.recrutation.infrastructure.repositories.grade_repository import GradeRepo
 from app.recrutation.presentation.schemas.grader import CreateGraderRequest, GraderRead
 from app.recrutation.presentation.schemas.grading_group import GroupRead, GradingGroupFilters
-
 
 router = APIRouter()
 
@@ -50,8 +50,16 @@ async def remove_group(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         group_id: Annotated[int, Path()],
         session: Annotated[AsyncSession, Depends(get_db)],
-        group_repo: Annotated[GroupRepo, Depends()]
+        group_repo: Annotated[GroupRepo, Depends()],
+        grader_repo: Annotated[GraderRepo, Depends()],
+        grade_repo: Annotated[GradeRepo, Depends()]
 ) -> bool:
+    graders = await grader_repo.get_by_group_id(session, group_id)
+    for grader in graders:
+        grades = await grade_repo.get_for_grader(session, grader.id)
+        for grade in grades:
+            await grade_repo.delete(session, grade.id)
+        await grader_repo.delete(session, grader.id)
     has_removed = await group_repo.remove(session, group_id)
     return has_removed
 
