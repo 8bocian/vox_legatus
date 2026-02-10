@@ -150,32 +150,7 @@ function showUploadSubmissionsPopup() {
   openPopup();
 }
 
-// ... reszta Twojego kodu bez zmian (refreshGroupsList, loadGradersForGroup, createNewGradingGroup itp.) ...
 
-export async function loadRecrutation() {
-  title.innerHTML = '<h2>Rekrutacja</h2>';
-
-  content.innerHTML = `
-    <div class="recrutation-layout">
-      <div class="left-column">
-        <div class="column-header">
-          <h3>Grupy oceniające</h3>
-          <div id="addGroupBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj grupę" /></div>
-        </div>
-        <div id="groupsList" class="groups-list"></div>
-      </div>
-      <div class="right-column">
-        <div class="placeholder">Lista zgłoszeń / kandydatów – do zrobienia później</div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('addGroupBtn').onclick = () => {
-    createNewGradingGroup();
-  };
-
-  await refreshGroupsList();
-}
 
 async function refreshGroupsList() {
   const groupsList = document.getElementById('groupsList');
