@@ -57,7 +57,7 @@ async def get_random(
     random_submission = await submission_repo.get_random_for_grader(session, grader.id)
     return SubmissionGraderRead(
         id=random_submission.id,
-        submission_number=random_submission.number,
+        submission_number=random_submission.submission_number,
         about_me=random_submission.about_me,
         subject_1=random_submission.subject_1,
         subject_2=random_submission.subject_2,
