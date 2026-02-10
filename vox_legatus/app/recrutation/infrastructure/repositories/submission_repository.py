@@ -80,7 +80,8 @@ class SubmissionRepo:
             )
         )
 
-        submissions = await session.execute(stmt)
+        submissions_result = await session.execute(stmt)
+        submissions = submissions_result.scalars().all()
         for submission in submissions:
             submission.group_id = None
 
