@@ -1,4 +1,5 @@
 import { get, post, del } from './api.js';
+import { openPopup, closePopup } from './dashboard-popup.js';
 
 export async function loadRecrutation() {
   title.innerHTML = '<h2>Rekrutacja</h2>';
