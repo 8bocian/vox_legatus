@@ -11,33 +11,6 @@ from app.crud import user as user_crud
 router = APIRouter()
 
 
-@router.get("/{user_id}", response_model=UserRead)
-async def get_user(
-        user_id: Annotated[int, Path()],
-        session: Annotated[AsyncSession, Depends(get_db)],
-        admin: User = Depends(require_role(Role.ADMIN))
-):
-    user = (await user_crud.get_user(session, user_id))
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return user
-
-
-@router.get("", response_model=List[UserRead])
-async def get_users(
-        session: Annotated[AsyncSession, Depends(get_db)],
-        admin: User = Depends(require_role(Role.ADMIN)),
-        size: Annotated[int, Query(ge=1, le=10000)] = 1000,
-        offset: Annotated[int, Query(ge=0)] = 0,
-        email: Annotated[Optional[str], Query()] = None
-):
-    print(email)
-    users = (await user_crud.get_users(session, email=email, size=size, offset=offset))
-    # print(users[0].email)
-    return users
-
 @router.get("/recrutation", response_model=List[UserRead])
 async def get_recrutation_users(
         session: Annotated[AsyncSession, Depends(get_db)],
@@ -61,6 +34,34 @@ async def get_recrutation_users(
         for user in users
     ]
     return users_schema
+
+@router.get("", response_model=List[UserRead])
+async def get_users(
+        session: Annotated[AsyncSession, Depends(get_db)],
+        admin: User = Depends(require_role(Role.ADMIN)),
+        size: Annotated[int, Query(ge=1, le=10000)] = 1000,
+        offset: Annotated[int, Query(ge=0)] = 0,
+        email: Annotated[Optional[str], Query()] = None
+):
+    print(email)
+    users = (await user_crud.get_users(session, email=email, size=size, offset=offset))
+    # print(users[0].email)
+    return users
+
+@router.get("/{user_id}", response_model=UserRead)
+async def get_user(
+        user_id: Annotated[int, Path()],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        admin: User = Depends(require_role(Role.ADMIN))
+):
+    user = (await user_crud.get_user(session, user_id))
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user
+
+
 
 @router.post("", response_model=UserRead)
 async def create_user(
