@@ -646,3 +646,32 @@ input:checked + .slider:before {
   max-height: 320px;
   overflow-y: auto;
 }
+
+/* w dashboard.css */
+
+.search-container {
+  position: relative;
+  margin: 12px 0 16px;
+  max-width: 400px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95em;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  pointer-events: none;
+}
+
+.submissions-table td[title] {
+  cursor: help;
+}

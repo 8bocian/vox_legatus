@@ -85,60 +85,77 @@ async function renderSubmissionsTab() {
           id="submissionSearch"
           placeholder="Filtruj po numerze zgłoszenia..."
           autocomplete="off"
+          spellcheck="false"
         />
+        <div class="search-icon">🔍</div>
       </div>
 
       <div id="submissionsList" class="submissions-list"></div>
     </div>
   `;
 
+  // obsługa wyszukiwania z debounce
   const searchInput = document.getElementById('submissionSearch');
-  let timeout = null;
+  let debounceTimer = null;
 
   searchInput.addEventListener('input', () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      loadSubmissions(searchInput.value.trim());
-    }, 400); // debounce ~0.4s
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadSubmissions(searchInput.value);
+    }, 350);
   });
 
+  // przyciski akcji
   document.getElementById('uploadSubmissionsBtn').onclick = showUploadSubmissionsPopup;
-  document.getElementById('assignGroupsBtn').onclick = /* ... Twoja funkcja ... */;
 
-  // pierwsze ładowanie bez filtra
+  document.getElementById('assignGroupsBtn').onclick = async () => {
+    if (!confirm('Na pewno przypisać wszystkie nieprzypisane zgłoszenia do grup?')) return;
+
+    try {
+      await post('/api/submissions/assign', {});
+      Swal.fire({
+        icon: 'success',
+        title: 'Sukces',
+        text: 'Zgłoszenia zostały przypisane',
+        timer: 1600,
+        showConfirmButton: false
+      });
+      await loadSubmissions(searchInput.value);
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Błąd',
+        text: 'Nie udało się przypisać zgłoszeń'
+      });
+    }
+  };
+
+  // pierwsze ładowanie (bez filtra)
   await loadSubmissions();
 }
-
-// ──────────────────────────────────────────────────────
-// Pozostałe funkcje bez zmian (wklej je tutaj)
-// ──────────────────────────────────────────────────────
-// refreshGroupsList()
-// loadGradersForGroup()
-// createNewGradingGroup()
-// createGraderInGroup()
-// showAssignUserPopup()
-// loadSubmissions()
-// showUploadSubmissionsPopup()
-
 // ──────────────────────────────────────────────────────
 // Ładowanie listy zgłoszeń
 // ──────────────────────────────────────────────────────
-async function loadSubmissions() {
+async function loadSubmissions(search = '') {
   const container = document.getElementById('submissionsList');
   if (!container) return;
 
   container.innerHTML = '<div class="loading">Ładowanie zgłoszeń...</div>';
 
   try {
-    const url = search
-      ? `/api/submissions?search=${encodeURIComponent(search)}`
+    // budujemy URL z parametrem search, jeśli istnieje
+    const url = search.trim()
+      ? `/api/submissions?search=${encodeURIComponent(search.trim())}`
       : '/api/submissions';
+
     const submissions = await get(url);
 
     container.innerHTML = '';
 
     if (submissions.length === 0) {
-      container.innerHTML = '<div class="empty">Brak zgłoszeń' + (search ? ` dla "${search}"` : '') + '</div>';
+      container.innerHTML = search.trim()
+        ? `<div class="empty">Brak zgłoszeń pasujących do "${escapeHtml(search)}"</div>`
+        : '<div class="empty">Brak zgłoszeń</div>';
       return;
     }
 
@@ -163,19 +180,25 @@ async function loadSubmissions() {
 
     submissions.forEach(sub => {
       const row = document.createElement('tr');
-      row.className = 'submission-row clickable'; // ← dodajemy klasę do stylizacji kursora
+      row.className = 'submission-row clickable';
 
       row.innerHTML = `
-        <td>${sub.submission_number || '-'}</td>
-        <td>${escapeHtml(sub.about_me?.substring(0, 80) || '')}${sub.about_me?.length > 80 ? '...' : ''}</td>
+        <td>${escapeHtml(sub.submission_number || '-')}</td>
+        <td title="${escapeHtml(sub.about_me || '')}">
+          ${escapeHtml(sub.about_me?.substring(0, 80) || '')}${sub.about_me?.length > 80 ? '...' : ''}
+        </td>
         <td>${escapeHtml(sub.subject_1 || '-')}</td>
-        <td>${escapeHtml(sub.subject_1_answer?.substring(0, 60) || '')}${sub.subject_1_answer?.length > 60 ? '...' : ''}</td>
+        <td title="${escapeHtml(sub.subject_1_answer || '')}">
+          ${escapeHtml(sub.subject_1_answer?.substring(0, 60) || '')}${sub.subject_1_answer?.length > 60 ? '...' : ''}
+        </td>
         <td>${escapeHtml(sub.subject_2 || '-')}</td>
-        <td>${escapeHtml(sub.subject_2_answer?.substring(0, 60) || '')}${sub.subject_2_answer?.length > 60 ? '...' : ''}</td>
+        <td title="${escapeHtml(sub.subject_2_answer || '')}">
+          ${escapeHtml(sub.subject_2_answer?.substring(0, 60) || '')}${sub.subject_2_answer?.length > 60 ? '...' : ''}
+        </td>
         <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
       `;
 
-      // Kliknięcie w wiersz otwiera popup z pełną treścią
+      // kliknięcie otwiera szczegółowy podgląd
       row.addEventListener('click', () => {
         showSubmissionDetailPopup(sub);
       });
@@ -185,11 +208,10 @@ async function loadSubmissions() {
 
     container.appendChild(table);
   } catch (err) {
-    console.error(err);
+    console.error('Błąd ładowania zgłoszeń:', err);
     container.innerHTML = '<div class="error">Błąd ładowania zgłoszeń</div>';
   }
 }
-
 function showSubmissionDetailPopup(sub) {
   popupTitle.innerHTML = `Zgłoszenie #${sub.submission_number || sub.id || '?'}`;
 
