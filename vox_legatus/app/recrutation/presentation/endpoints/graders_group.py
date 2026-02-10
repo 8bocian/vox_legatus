@@ -13,7 +13,7 @@ from app.recrutation.infrastructure.repositories.grade_repository import GradeRe
 from app.recrutation.presentation.schemas.grader import CreateGraderRequest, GraderRead
 from app.recrutation.presentation.schemas.grading_group import GroupRead, GradingGroupFilters
 
-from vox_legatus.app.recrutation.infrastructure.repositories.submission_repository import SubmissionRepo
+from app.recrutation.infrastructure.repositories.submission_repository import SubmissionRepo
 
 router = APIRouter()
 
