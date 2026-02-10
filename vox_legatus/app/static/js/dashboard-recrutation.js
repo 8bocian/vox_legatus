@@ -3,38 +3,117 @@ import { openPopup, closePopup } from './dashboard-popup.js';
 
 // ... importy bez zmian ...
 
+import { get, post, del } from './api.js';
+import { openPopup, closePopup } from './dashboard-popup.js';
+
+// ──────────────────────────────────────────────────────
+// Główna funkcja ładowania zakładki Rekrutacja
+// ──────────────────────────────────────────────────────
 export async function loadRecrutation() {
   title.innerHTML = '<h2>Rekrutacja</h2>';
 
   content.innerHTML = `
-    <div class="recrutation-layout">
-      <div class="left-column">
-        <div class="column-header">
-          <h3>Grupy oceniające</h3>
-          <div id="addGroupBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj grupę" /></div>
-        </div>
-        <div id="groupsList" class="groups-list"></div>
-      </div>
+    <div class="recrutation-tabs">
+      <button class="tab-btn active" data-tab="groups">Grupy oceniające</button>
+      <button class="tab-btn" data-tab="submissions">Zgłoszenia</button>
+    </div>
 
-      <div class="right-column">
-        <div class="column-header">
-          <h3>Zgłoszenia</h3>
-          <div id="uploadSubmissionsBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj zgłoszenia" /></div>
-        </div>
-        <div id="submissionsList" class="submissions-list"></div>
+    <div id="tabContent" class="tab-content"></div>
+  `;
+
+  // obsługa przełączania zakładek
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const tab = btn.dataset.tab;
+      if (tab === 'groups') {
+        renderGroupsTab();
+      } else if (tab === 'submissions') {
+        renderSubmissionsTab();
+      }
+    });
+  });
+
+  // domyślnie otwieramy grupy
+  renderGroupsTab();
+}
+
+// ──────────────────────────────────────────────────────
+// Zakładka: Grupy oceniające
+// ──────────────────────────────────────────────────────
+async function renderGroupsTab() {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = `
+    <div class="column full-width">
+      <div class="column-header">
+        <h3>Grupy oceniające</h3>
+        <div id="addGroupBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj grupę" /></div>
       </div>
+      <div id="groupsList" class="groups-list"></div>
     </div>
   `;
 
   document.getElementById('addGroupBtn').onclick = () => createNewGradingGroup();
 
-  document.getElementById('uploadSubmissionsBtn').onclick = () => {
-    showUploadSubmissionsPopup();
+  await refreshGroupsList();   // Twoja istniejąca funkcja
+}
+
+// ──────────────────────────────────────────────────────
+// Zakładka: Zgłoszenia
+// ──────────────────────────────────────────────────────
+async function renderSubmissionsTab() {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = `
+    <div class="column full-width">
+      <div class="column-header">
+        <h3>Zgłoszenia</h3>
+        <div class="header-actions">
+          <div id="uploadSubmissionsBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj zgłoszenia" /></div>
+          <button id="assignGroupsBtn" class="btn primary">Przypisz do grup</button>
+        </div>
+      </div>
+      <div id="submissionsList" class="submissions-list"></div>
+    </div>
+  `;
+
+  document.getElementById('uploadSubmissionsBtn').onclick = showUploadSubmissionsPopup;
+  document.getElementById('assignGroupsBtn').onclick = async () => {
+    if (!confirm('Czy na pewno przypisać wszystkie nieprzypisane zgłoszenia do grup?')) return;
+
+    try {
+      await post('/api/submissions/assign', {});
+      Swal.fire({
+        icon: 'success',
+        title: 'Przypisano',
+        text: 'Zgłoszenia zostały przypisane do grup',
+        timer: 1800,
+        showConfirmButton: false
+      });
+      await loadSubmissions();
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Błąd',
+        text: 'Nie udało się przypisać zgłoszeń\n' + (err.message || '')
+      });
+    }
   };
 
-  await refreshGroupsList();
-  await loadSubmissions();   // ← nowe
+  await loadSubmissions();
 }
+
+// ──────────────────────────────────────────────────────
+// Pozostałe funkcje bez zmian (wklej je tutaj)
+// ──────────────────────────────────────────────────────
+// refreshGroupsList()
+// loadGradersForGroup()
+// createNewGradingGroup()
+// createGraderInGroup()
+// showAssignUserPopup()
+// loadSubmissions()
+// showUploadSubmissionsPopup()
 
 // ──────────────────────────────────────────────────────
 // Ładowanie listy zgłoszeń
