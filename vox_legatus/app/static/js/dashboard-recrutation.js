@@ -47,7 +47,7 @@ async function refreshGroupsList() {
       groupDiv.innerHTML = `
         <div class="group-header">
           <div>Grupa #${group.group_id}</div>
-          <div class="action-btn delete-group" data-group-id="${group.group_id}" title="Usuń grupę">
+          <div class="btn delete-group" data-group-id="${group.group_id}" title="Usuń grupę">
             <img src="/static/images/bin.svg" alt="usuń" />
           </div>
         </div>
@@ -114,11 +114,11 @@ async function loadGradersForGroup(groupId, graderIds) {
       div.innerHTML = `
         <div>Grader #${grader.grader_id} – ${userInfo}</div>
         ${grader.user_id ? `
-          <div class="action-btn remove-user" data-grader-id="${grader.grader_id}" title="Odłącz użytkownika">
+          <div class="btn remove-user" data-grader-id="${grader.grader_id}" title="Odłącz użytkownika">
             <img src="/static/images/delete.svg" alt="odłącz" />
           </div>
         ` : `
-          <div class="action-btn assign-user" data-grader-id="${grader.grader_id}" title="Przypisz użytkownika">
+          <div class="btn assign-user" data-grader-id="${grader.grader_id}" title="Przypisz użytkownika">
             <img src="/static/images/add.svg" alt="przypisz" />
           </div>
         `}
