@@ -1,6 +1,6 @@
 from typing import Sequence, Optional
 
-from sqlalchemy import select, or_, func, and_
+from sqlalchemy import select, or_, func, and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.recrutation.infrastructure.models.submission import SubmissionModel
@@ -71,3 +71,7 @@ class SubmissionRepo:
         result = await session.execute(stmt)
         submission = result.scalar_one_or_none()
         return submission
+
+
+    async def delete_all(self, session: AsyncSession):
+        await session.execute(delete(SubmissionModel))

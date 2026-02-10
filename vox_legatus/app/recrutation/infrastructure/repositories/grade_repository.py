@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.recrutation.infrastructure.models.grade import GradeModel
@@ -26,3 +26,6 @@ class GradeRepo:
             grade=grade
         )
         session.add(grade)
+
+    async def delete_all(self, session: AsyncSession):
+        await session.execute(delete(GradeModel))
