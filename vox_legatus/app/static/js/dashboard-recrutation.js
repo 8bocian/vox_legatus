@@ -129,13 +129,30 @@ async function loadGradersForGroup(groupId, graderIds) {
 
       if (grader.user_id) {
         div.querySelector('.remove-user').onclick = async () => {
-          if (!confirm('Odłączyć użytkownika od tego gracera?')) return;
-          // Na razie usuwamy gracera – potem można dodać endpoint do samego odpięcia
+          if (!confirm('Odpiąć użytkownika od tego Gradera? (Grader pozostanie pusty)')) return;
+
           try {
-            await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
-            refreshGroupsList();
+            // ────────────── NOWY ENDPOINT ──────────────
+            await post(`/api/grader/${grader.grader_id}/unassign`, {});
+            // lub jeśli dodałeś PATCH: await put(`/api/grader/${grader.grader_id}/unassign`, {});
+
+            // Odświeżamy tylko graderów w tej grupie
+            await renderGradersForGroup(groupId);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Udało się',
+              text: 'Użytkownik odpięty',
+              timer: 1400,
+              showConfirmButton: false
+            });
           } catch (err) {
-            alert('Nie udało się odłączyć: ' + (err.message || ''));
+            console.error(err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Błąd',
+              text: 'Nie udało się odpiąć użytkownika\n' + (err.message || 'Sprawdź konsolę')
+            });
           }
         };
       } else {
