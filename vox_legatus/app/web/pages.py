@@ -65,4 +65,4 @@ async def dashboard(
 def login_page(
         request: Request
 ):
-    return templates.TemplateResponse("login.html", {"request": request, "timestamp": int(time.time())})
+    return templates.TemplateResponse("recrutation.html", {"request": request, "timestamp": int(time.time())})

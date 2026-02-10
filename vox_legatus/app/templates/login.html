@@ -117,6 +117,8 @@
           window.location.href = "/dashboard";
         } else if (json.role === "USER") {
           window.location.href = "/vote";
+        } else if (json.role === "GRADER") {
+          window.location.href = "/recrutation";
         } else {
           msg.innerText = "Unknown role";
         }
