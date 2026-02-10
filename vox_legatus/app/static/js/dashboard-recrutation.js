@@ -199,6 +199,7 @@ async function renderSubmissionsTab() {
         <div class="header-actions">
           <div id="uploadSubmissionsBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj zgłoszenia" /></div>
           <button id="assignGroupsBtn" class="btn primary">Przypisz do grup</button>
+          <button id="deleteAllSubmissionsBtn" class="btn danger">Usuń wszystkie zgłoszenia</button>
         </div>
       </div>
 
@@ -217,7 +218,7 @@ async function renderSubmissionsTab() {
     </div>
   `;
 
-  // obsługa wyszukiwania z debounce
+  // wyszukiwanie (bez zmian)
   const searchInput = document.getElementById('submissionSearch');
   let debounceTimer = null;
 
@@ -228,7 +229,7 @@ async function renderSubmissionsTab() {
     }, 350);
   });
 
-  // przyciski akcji
+  // istniejące akcje
   document.getElementById('uploadSubmissionsBtn').onclick = showUploadSubmissionsPopup;
 
   document.getElementById('assignGroupsBtn').onclick = async () => {
@@ -236,27 +237,52 @@ async function renderSubmissionsTab() {
 
     try {
       await post('/api/submissions/assign', {});
+      Swal.fire({ icon: 'success', title: 'Sukces', text: 'Zgłoszenia przypisane', timer: 1600 });
+      await loadSubmissions(searchInput.value);
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się przypisać zgłoszeń' });
+    }
+  };
+
+  // NOWY przycisk – usuń wszystkie zgłoszenia
+  document.getElementById('deleteAllSubmissionsBtn').onclick = async () => {
+    const result = await Swal.fire({
+      title: 'Uwaga – nieodwracalne!',
+      html: 'Czy na pewno chcesz <b>usunąć wszystkie zgłoszenia</b>?<br>To działanie nie może być cofnięte.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Tak, usuń wszystko',
+      cancelButtonText: 'Anuluj'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await del('/api/submissions/all');   // ← nowy endpoint, który musisz dodać
+
       Swal.fire({
         icon: 'success',
-        title: 'Sukces',
-        text: 'Zgłoszenia zostały przypisane',
-        timer: 1600,
+        title: 'Usunięto',
+        text: 'Wszystkie zgłoszenia zostały usunięte',
+        timer: 1800,
         showConfirmButton: false
       });
-      await loadSubmissions(searchInput.value);
+
+      await loadSubmissions(); // odświeżamy listę
     } catch (err) {
       Swal.fire({
         icon: 'error',
         title: 'Błąd',
-        text: 'Nie udało się przypisać zgłoszeń'
+        text: 'Nie udało się usunąć zgłoszeń\n' + (err.message || '')
       });
     }
   };
 
-  // pierwsze ładowanie (bez filtra)
+  // pierwsze ładowanie
   await loadSubmissions();
-}
-// ──────────────────────────────────────────────────────
+}// ──────────────────────────────────────────────────────
 // Ładowanie listy zgłoszeń
 // ──────────────────────────────────────────────────────
 async function loadSubmissions(search = '') {

@@ -97,6 +97,16 @@ async def get_submissions(
         for submission in submissions
     ]
 
+@router.delete("/all")
+async def delete_all_submissions(
+        user: Annotated[User, Depends(require_role([Role.ADMIN]))],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        submission_repo: Annotated[SubmissionRepo, Depends()],
+        grade_repo: Annotated[GradeRepo, Depends()]
+):
+    await grade_repo.delete_all(session)
+    await submission_repo.delete_all(session)
+
 
 @router.get("/{submission_id}")
 async def get_submission(
@@ -123,15 +133,6 @@ async def get_submission(
     else:
         return None
 
-@router.delete("")
-async def get_submissions(
-        user: Annotated[User, Depends(require_role([Role.ADMIN]))],
-        session: Annotated[AsyncSession, Depends(get_db)],
-        submission_repo: Annotated[SubmissionRepo, Depends()],
-        grade_repo: Annotated[GradeRepo, Depends()]
-):
-    await grade_repo.delete_all(session)
-    await submission_repo.delete_all(session)
 
 @router.get("/{submission_id}/grades")
 async def get_submission_grades(
