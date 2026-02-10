@@ -1,65 +1,75 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Rekrutacja – Ocena zgłoszeń</title>
-  <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/recrutation.css?v={{ timestamp }}" />
+  <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/css/recrutation.css?v={{ timestamp }}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-<body class="recrutation-grader">
-
-  <nav>
-    <div id="logoutBtn" class="btn">
-      <img src="/static/images/logout-white.svg" alt="Wyloguj" />
-    </div>
-  </nav>
-
-  <main>
-    <h1>Ocena zgłoszeń</h1>
-
-    <div id="currentSubmission" class="submission-card hidden">
-      <div class="submission-header">
-        <h2 id="submissionNumber">Zgłoszenie #...</h2>
-        <div id="groupInfo">Grupa #...</div>
+<body>
+  <div class="mainContainer">
+    <div class="header">
+      <h1>Ocena zgłoszeń</h1>
+      <div id="logoutBtn" class="btn">
+        <img src="/static/images/logout.svg" alt="wyloguj" />
       </div>
+    </div>
+
+    <div id="currentSubmission" class="submission hidden">
+      <h2 id="submissionTitle">Zgłoszenie #...</h2>
+      <div id="groupInfo" class="group-label">Grupa: —</div>
 
       <div class="submission-content">
         <div class="section">
           <h3>O mnie</h3>
-          <div id="aboutMe" class="long-text"></div>
+          <div id="aboutMe" class="content-box"></div>
         </div>
 
         <div class="section">
           <h3>Temat 1</h3>
           <div id="subject1" class="topic"></div>
-          <h4>Odpowiedź:</h4>
-          <div id="answer1" class="long-text"></div>
+          <div id="answer1" class="content-box"></div>
         </div>
 
         <div class="section">
           <h3>Temat 2</h3>
           <div id="subject2" class="topic"></div>
-          <h4>Odpowiedź:</h4>
-          <div id="answer2" class="long-text"></div>
+          <div id="answer2" class="content-box"></div>
         </div>
       </div>
 
-      <div class="grading-section">
+      <div class="grading-area">
         <h3>Twoja ocena</h3>
-        <div class="grade-buttons" id="gradeButtons"></div>
-        <button id="saveGradeBtn" class="btn primary large" disabled>Zapisz ocenę</button>
+        <div id="gradeButtons" class="grade-buttons"></div>
+
+        <div class="action-buttons">
+          <button id="saveGradeBtn" class="btn primary" disabled>Zapisz ocenę</button>
+          <button id="skipBtn" class="btn secondary">Pomiń / następne</button>
+        </div>
       </div>
     </div>
 
     <div id="noSubmission" class="empty-message">
-      <p>Brak dostępnych zgłoszeń do oceny w tej chwili.</p>
+      <p>Aktualnie nie ma zgłoszeń do oceny.</p>
       <button id="getNextBtn" class="btn primary">Pobierz zgłoszenie</button>
     </div>
 
     <div id="loading" class="loading hidden">Pobieranie zgłoszenia...</div>
-  </main>
+
+    <!-- Modal potwierdzenia (opcjonalny) -->
+    <div id="confirmModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Potwierdzenie</h3>
+        <p>Czy na pewno chcesz zapisać ocenę <strong id="confirmGrade"></strong>?</p>
+        <div class="modal-actions">
+          <button id="confirmYes" class="btn primary">Tak, zapisz</button>
+          <button id="confirmNo" class="btn secondary">Anuluj</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/static/js/api.js?v={{ timestamp }}"></script>
   <script type="module" src="/static/js/recrutation-grader.js?v={{ timestamp }}"></script>

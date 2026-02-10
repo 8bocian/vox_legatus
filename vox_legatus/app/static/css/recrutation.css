@@ -1,130 +1,97 @@
-/* recrutation-grader.css */
-
-* {
-  box-sizing: border-box;
-}
-
-body.recrutation-grader {
+body {
   font-family: 'Poppins', sans-serif;
-  background: #f4f6f9;
+  background: #f5f7fa;
   color: #333;
   margin: 0;
+  padding: 0;
   min-height: 100vh;
-  line-height: 1.6;
 }
 
-/* Nav */
-nav {
-  background: #1976d2;
-  padding: 12px 24px;
+.mainContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
   display: flex;
-  justify-content: flex-end;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ddd;
 }
 
-nav .btn {
-  width: 40px;
-  height: 40px;
+.header h1 {
+  margin: 0;
+  color: #1976d2;
+  font-size: 2em;
+}
+
+.btn {
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #eee;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
-nav .btn:hover {
-  background: rgba(255,255,255,0.15);
-  border-radius: 6px;
+.btn:hover {
+  background: #ddd;
 }
 
-nav img {
+.btn img {
   width: 24px;
   height: 24px;
 }
 
-/* Główna zawartość */
-main {
-  max-width: 960px;
-  margin: 32px auto;
-  padding: 0 20px;
-}
+.hidden { display: none !important; }
 
-h1 {
-  text-align: center;
-  color: #1976d2;
-  margin-bottom: 32px;
-  font-weight: 600;
-}
-
-/* Karta zgłoszenia */
-.submission-card {
+.submission {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  padding: 32px;
-  margin-bottom: 32px;
+  padding: 28px;
 }
 
-.submission-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #eee;
+#submissionTitle {
+  margin: 0 0 8px;
+  font-size: 1.7em;
 }
 
-.submission-header h2 {
-  margin: 0;
-  font-size: 1.6em;
-  color: #222;
-}
-
-#groupInfo {
+.group-label {
   color: #555;
   font-weight: 500;
+  margin-bottom: 24px;
 }
 
-/* Sekcje treści */
 .section {
   margin-bottom: 32px;
 }
 
 .section h3 {
   color: #1976d2;
-  margin: 0 0 12px;
-  font-size: 1.3em;
+  margin: 0 0 10px;
 }
 
-.section h4 {
-  color: #555;
-  margin: 16px 0 8px;
-  font-size: 1.05em;
-}
-
-.long-text,
-.topic {
+.content-box, .topic {
   background: #fafafa;
   padding: 16px 20px;
   border-radius: 8px;
   border: 1px solid #eee;
   white-space: pre-wrap;
-  word-break: break-word;
   line-height: 1.6;
-  font-size: 1.02em;
 }
 
-/* Sekcja oceniania */
-.grading-section {
+.grading-area {
   margin-top: 40px;
   padding-top: 24px;
-  border-top: 2px solid #eee;
+  border-top: 1px solid #eee;
   text-align: center;
-}
-
-.grading-section h3 {
-  margin-bottom: 20px;
-  color: #444;
 }
 
 .grade-buttons {
@@ -132,102 +99,74 @@ h1 {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-  max-width: 600px;
-  margin: 0 auto 28px;
+  margin: 20px 0 32px;
 }
 
 .grade-btn {
-  width: 54px;
+  min-width: 54px;
   height: 54px;
+  border: 2px solid #ccc;
   border-radius: 10px;
-  border: 2px solid #ddd;
   background: white;
-  font-size: 1.18em;
+  font-size: 1.15em;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s;
-  color: #444;
 }
 
 .grade-btn:hover {
   border-color: #1976d2;
-  background: #e3f2fd;
-  transform: translateY(-2px);
+  background: #e8f4fd;
 }
 
 .grade-btn.selected {
   background: #1976d2;
   color: white;
   border-color: #1976d2;
-  box-shadow: 0 4px 12px rgba(25,118,210,0.3);
 }
 
-/* Przycisk zapisz */
-.btn.primary.large {
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.btn.primary {
   background: #1976d2;
   color: white;
   border: none;
-  padding: 14px 40px;
-  font-size: 1.15em;
+  padding: 12px 36px;
+  font-size: 1.1em;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-  min-width: 240px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.btn.primary.large:hover:not(:disabled) {
-  background: #1565c0;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-
-.btn.primary.large:disabled {
+.btn.primary:disabled {
   background: #aaa;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
-/* Komunikat brak zgłoszeń */
+.btn.secondary {
+  background: #f0f0f0;
+  color: #444;
+  border: 1px solid #ccc;
+  padding: 12px 28px;
+  font-size: 1.1em;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .empty-message {
   text-align: center;
-  padding: 100px 20px;
+  padding: 120px 20px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
 
-.empty-message p {
-  font-size: 1.25em;
-  color: #555;
-  margin-bottom: 24px;
-}
-
-/* Loading */
 .loading {
   text-align: center;
-  font-size: 1.3em;
+  font-size: 1.4em;
   color: #1976d2;
-  padding: 120px 0;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  main {
-    padding: 0 16px;
-  }
-
-  .submission-card {
-    padding: 24px;
-  }
-
-  .grade-buttons {
-    gap: 8px;
-  }
-
-  .grade-btn {
-    width: 48px;
-    height: 48px;
-    font-size: 1.05em;
-  }
+  padding: 140px 0;
 }
