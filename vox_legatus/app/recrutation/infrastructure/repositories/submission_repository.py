@@ -72,6 +72,18 @@ class SubmissionRepo:
         submission = result.scalar_one_or_none()
         return submission
 
+    async def clear_for_group(self, session: AsyncSession, group_id: int):
+        stmt = (
+            select(SubmissionModel)
+            .where(
+                SubmissionModel.group_id == group_id,
+            )
+        )
+
+        submissions = await session.execute(stmt)
+        for submission in submissions:
+            await session.delete(submission)
+
 
     async def delete_all(self, session: AsyncSession):
         await session.execute(delete(SubmissionModel))

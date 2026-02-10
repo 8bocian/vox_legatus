@@ -13,6 +13,8 @@ from app.recrutation.infrastructure.repositories.grade_repository import GradeRe
 from app.recrutation.presentation.schemas.grader import CreateGraderRequest, GraderRead
 from app.recrutation.presentation.schemas.grading_group import GroupRead, GradingGroupFilters
 
+from vox_legatus.app.recrutation.infrastructure.repositories.submission_repository import SubmissionRepo
+
 router = APIRouter()
 
 @router.post("")
@@ -52,8 +54,10 @@ async def remove_group(
         session: Annotated[AsyncSession, Depends(get_db)],
         group_repo: Annotated[GroupRepo, Depends()],
         grader_repo: Annotated[GraderRepo, Depends()],
-        grade_repo: Annotated[GradeRepo, Depends()]
+        grade_repo: Annotated[GradeRepo, Depends()],
+        submission_repo: Annotated[SubmissionRepo, Depends()]
 ) -> bool:
+    await submission_repo.clear_for_group(session, group_id)
     graders = await grader_repo.get_by_group_id(session, group_id)
     for grader in graders:
         grades = await grade_repo.get_for_grader(session, grader.id)
