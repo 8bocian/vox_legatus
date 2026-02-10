@@ -71,6 +71,7 @@ export function loadUsersPopup(user = null) {
       <select id="roleInp">
         <option value="User" ${user && user.role === 'User' ? 'selected' : ''}>Użytkownik</option>
         <option value="Admin" ${user && user.role === 'Admin' ? 'selected' : ''}>Administrator</option>
+        <option value="Grader" ${user && user.role === 'Grader' ? 'selected' : ''}>Rekruter</option>
       </select>
     </div>
   `;
