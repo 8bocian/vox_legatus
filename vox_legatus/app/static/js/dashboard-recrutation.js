@@ -1,10 +1,6 @@
 import { get, post, del } from './api.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
 
-// ... importy bez zmian ...
-
-import { get, post, del } from './api.js';
-import { openPopup, closePopup } from './dashboard-popup.js';
 
 // ──────────────────────────────────────────────────────
 // Główna funkcja ładowania zakładki Rekrutacja
