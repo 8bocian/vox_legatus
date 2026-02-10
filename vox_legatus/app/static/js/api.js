@@ -45,20 +45,26 @@ async function get(endpoint) {
   return response.json();
 }
 
-async function post(endpoint, data) {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+// w api.js
+export async function post(url, data, options = {}) {
+  const headers = options.isFormData ? {} : { 'Content-Type': 'application/json' };
+  const body = options.isFormData ? data : JSON.stringify(data);
+
+  const response = await fetch(url, {
     method: 'POST',
-    headers: buildHeaders(),
-    body: JSON.stringify(data),
+    headers,
+    body,
+    credentials: 'include', // jeśli używasz ciasteczek/sesji
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`POST ${endpoint} failed: ${error}`);
+    const errText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errText}`);
   }
 
-  return response.json();
+  return response.json(); // lub response.text() jeśli API zwraca nie-JSON
 }
+
 
 async function put(endpoint, data) {
   const response = await fetch(`${API_BASE}${endpoint}`, {

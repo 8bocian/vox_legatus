@@ -522,3 +522,32 @@ input:checked + .slider:before {
   text-align: center;
   padding: 40px 0;
 }
+
+.submissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.submissions-table th,
+.submissions-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.submissions-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+.submissions-table tr:hover {
+  background: #f5faff;
+}
+
+.right-column .column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}

@@ -1,6 +1,157 @@
 import { get, post, del } from './api.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
 
+// ... importy bez zmian ...
+
+export async function loadRecrutation() {
+  title.innerHTML = '<h2>Rekrutacja</h2>';
+
+  content.innerHTML = `
+    <div class="recrutation-layout">
+      <div class="left-column">
+        <div class="column-header">
+          <h3>Grupy oceniające</h3>
+          <div id="addGroupBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj grupę" /></div>
+        </div>
+        <div id="groupsList" class="groups-list"></div>
+      </div>
+
+      <div class="right-column">
+        <div class="column-header">
+          <h3>Zgłoszenia</h3>
+          <div id="uploadSubmissionsBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj zgłoszenia" /></div>
+        </div>
+        <div id="submissionsList" class="submissions-list"></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('addGroupBtn').onclick = () => createNewGradingGroup();
+
+  document.getElementById('uploadSubmissionsBtn').onclick = () => {
+    showUploadSubmissionsPopup();
+  };
+
+  await refreshGroupsList();
+  await loadSubmissions();   // ← nowe
+}
+
+// ──────────────────────────────────────────────────────
+// Ładowanie listy zgłoszeń
+// ──────────────────────────────────────────────────────
+async function loadSubmissions() {
+  const container = document.getElementById('submissionsList');
+  if (!container) return;
+
+  container.innerHTML = '<div class="loading">Ładowanie zgłoszeń...</div>';
+
+  try {
+    const submissions = await get('/api/submissions');
+
+    container.innerHTML = '';
+
+    if (submissions.length === 0) {
+      container.innerHTML = '<div class="empty">Brak zgłoszeń</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'submissions-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Nr zgłoszenia</th>
+          <th>O mnie</th>
+          <th>Temat 1</th>
+          <th>Odpowiedź 1</th>
+          <th>Temat 2</th>
+          <th>Odpowiedź 2</th>
+          <th>Grupa</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    submissions.forEach(sub => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${sub.submission_number || '-'}</td>
+        <td>${sub.about_me?.substring(0, 80) || ''}${sub.about_me?.length > 80 ? '...' : ''}</td>
+        <td>${sub.subject_1 || '-'}</td>
+        <td>${sub.subject_1_answer?.substring(0, 60) || ''}${sub.subject_1_answer?.length > 60 ? '...' : ''}</td>
+        <td>${sub.subject_2 || '-'}</td>
+        <td>${sub.subject_2_answer?.substring(0, 60) || ''}${sub.subject_2_answer?.length > 60 ? '...' : ''}</td>
+        <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    container.appendChild(table);
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = '<div class="error">Błąd ładowania zgłoszeń</div>';
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// Popup do uploadu pliku CSV
+// ──────────────────────────────────────────────────────
+function showUploadSubmissionsPopup() {
+  popupTitle.innerHTML = 'Dodaj nowe zgłoszenia (CSV)';
+
+  popupContent.innerHTML = `
+    <div class="input">
+      <div class="inputTitle">Plik CSV</div>
+      <input type="file" id="submissionsFileInput" accept=".csv" />
+    </div>
+    <div style="margin-top: 12px; color: #666; font-size: 0.9em;">
+      Oczekiwany format: submission_number, about_me, subject_1, subject_2, subject_1_answer, subject_2_answer
+    </div>
+  `;
+
+  // zmieniamy przycisk w stopce popupu
+  createBtn.innerHTML = '<img src="/static/images/upload.svg" alt="Wgraj" /> Wgraj plik';
+  createBtn.onclick = async () => {
+    const fileInput = document.getElementById('submissionsFileInput');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Wybierz plik CSV');
+      return;
+    }
+
+    const file = fileInput.files[0];
+
+    try {
+      const formData = new FormData();
+      formData.append('submissions_file', file);
+
+      await post('/api/submissions', formData, { isFormData: true });  // ← ważne: bez JSON headers
+
+      closePopup();
+      await loadSubmissions();   // odświeżamy listę zgłoszeń
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Gotowe',
+        text: 'Zgłoszenia zostały dodane',
+        timer: 1800,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Błąd',
+        text: 'Nie udało się wgrać pliku\n' + (err.message || 'Sprawdź format pliku')
+      });
+    }
+  };
+
+  openPopup();
+}
+
+// ... reszta Twojego kodu bez zmian (refreshGroupsList, loadGradersForGroup, createNewGradingGroup itp.) ...
+
 export async function loadRecrutation() {
   title.innerHTML = '<h2>Rekrutacja</h2>';
 
