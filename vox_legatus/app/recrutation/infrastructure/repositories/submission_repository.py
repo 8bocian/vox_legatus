@@ -1,10 +1,12 @@
 from typing import Sequence, Optional
 
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.recrutation.infrastructure.models.submission import SubmissionModel
 from app.recrutation.presentation.schemas.submission import SubmissionCreate
+from app.recrutation.infrastructure.models.grade import GradeModel
+from app.recrutation.infrastructure.models.grader import GraderModel
 
 
 class SubmissionRepo:
@@ -46,3 +48,26 @@ class SubmissionRepo:
             submission.group_id = group_id
             return True
         return False
+
+    async def get_random_for_grader(self, session: AsyncSession, grader_id: int) -> Optional[SubmissionModel]:
+        stmt = (
+            select(SubmissionModel)
+            .join(GraderModel, SubmissionModel.group_id == GraderModel.group_id)
+            .outerjoin(
+                GradeModel,
+                and_(
+                    GradeModel.submission_id == SubmissionModel.id,
+                    GradeModel.grader_id == grader_id
+                )
+            )
+            .where(
+                GraderModel.id == grader_id,
+                GradeModel.id.is_(None)  # nie ocenione przez tego gracera
+            )
+            .order_by(func.random())  # RANDOM() w PostgreSQL
+            .limit(1)
+        )
+
+        result = await session.execute(stmt)
+        submission = result.scalar_one_or_none()
+        return submission

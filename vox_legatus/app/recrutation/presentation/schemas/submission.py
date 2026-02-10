@@ -22,3 +22,14 @@ class SubmissionRead(BaseModel):
 
 class SubmissionGradeRequest(BaseModel):
     grade: float
+
+class SubmissionGraderRead(BaseModel):
+    id: int
+    submission_number: str
+    about_me: str
+    subject_1: str
+    subject_2: str
+    subject_1_answer: str
+    subject_2_answer: str
+    group_id: int
+    already_graded: bool

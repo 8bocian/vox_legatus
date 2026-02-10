@@ -16,6 +16,7 @@ from app.recrutation.infrastructure.repositories.grading_group_repository import
 from app.recrutation.infrastructure.repositories.submission_repository import SubmissionRepo
 from app.recrutation.presentation.schemas.submission import SubmissionCreate, SubmissionRead, SubmissionGradeRequest
 from app.recrutation.presentation.schemas.grade import GradeRead
+from app.recrutation.presentation.schemas.submission import SubmissionGraderRead
 from app.crud import user as user_crud
 
 router = APIRouter()
@@ -42,6 +43,29 @@ async def add_submissions(
         )
         await submission_repo.create(session, create_submission)
     return True
+
+
+@router.get("/random")
+async def get_random(
+        user: Annotated[User, Depends(require_role(Role.GRADER))],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        submission_repo: Annotated[SubmissionRepo, Depends()],
+        grader_repo: Annotated[GraderRepo, Depends()],
+) -> list[SubmissionGraderRead]:
+    graders = await grader_repo.get_by_user_id(session, user.id)
+    grader = graders[0]
+    random_submission = await submission_repo.get_random_for_grader(session, grader)
+    return SubmissionGraderRead(
+        id=random_submission.id,
+        submission_number=random_submission.number,
+        about_me=random_submission.about_me,
+        subject_1=random_submission.subject_1,
+        subject_2=random_submission.subject_2,
+        subject_1_answer=random_submission.subject_1_answer,
+        subject_2_answer=random_submission.subject_2_answer,
+        group_id=grader.group_id,
+        already_graded=False
+    )
 
 
 @router.get("")
