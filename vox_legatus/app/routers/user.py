@@ -50,7 +50,18 @@ async def get_recrutation_users(
     roles = (Role.ADMIN, Role.GRADER)
     users = (await user_crud.get_users_by_role(session, roles))
     # print(users[0].email)
-    return users
+    users_schema = [
+        UserRead(
+            id=user.id,
+            name=user.name,
+            surname=user.surname,
+            email=user.email,
+            role=user.role,
+            created_at=user.created_at
+        )
+        for user in users
+    ]
+    return users_schema
 
 @router.post("", response_model=UserRead)
 async def create_user(
