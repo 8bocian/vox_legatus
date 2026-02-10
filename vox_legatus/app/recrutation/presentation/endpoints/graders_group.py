@@ -59,11 +59,11 @@ async def remove_group(
 async def assign_user(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         grader_to_add: Annotated[CreateGraderRequest, Body()],
-        group_id: Annotated[int, Path()],
+        grader_id: Annotated[int, Path()],
         session: Annotated[AsyncSession, Depends(get_db)],
         grader_repo: Annotated[GraderRepo, Depends()]
 ) -> bool:
-    is_assigned = await grader_repo.assign_user(session, group_id, grader_to_add.user_id)
+    is_assigned = await grader_repo.assign_user(session, grader_id, grader_to_add.user_id)
     return is_assigned
 
 @router.post("/{group_id}/graders")
