@@ -46,9 +46,10 @@ async def add_submissions(
 async def get_submissions(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
         session: Annotated[AsyncSession, Depends(get_db)],
-        submission_repo: Annotated[SubmissionRepo, Depends()]
+        submission_repo: Annotated[SubmissionRepo, Depends()],
+        search: Annotated[Optional[str], Query(max_length=64)] = None,
 ) -> list[SubmissionRead]:
-    submissions = await submission_repo.get_all(session)
+    submissions = await submission_repo.get_all(session, search)
     return [
         SubmissionRead(
             id = submission.id,

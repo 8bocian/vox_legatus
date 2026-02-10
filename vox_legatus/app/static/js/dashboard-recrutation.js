@@ -78,33 +78,34 @@ async function renderSubmissionsTab() {
           <button id="assignGroupsBtn" class="btn primary">Przypisz do grup</button>
         </div>
       </div>
+
+      <div class="search-container">
+        <input
+          type="text"
+          id="submissionSearch"
+          placeholder="Filtruj po numerze zgłoszenia..."
+          autocomplete="off"
+        />
+      </div>
+
       <div id="submissionsList" class="submissions-list"></div>
     </div>
   `;
 
+  const searchInput = document.getElementById('submissionSearch');
+  let timeout = null;
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      loadSubmissions(searchInput.value.trim());
+    }, 400); // debounce ~0.4s
+  });
+
   document.getElementById('uploadSubmissionsBtn').onclick = showUploadSubmissionsPopup;
-  document.getElementById('assignGroupsBtn').onclick = async () => {
-    if (!confirm('Czy na pewno przypisać wszystkie nieprzypisane zgłoszenia do grup?')) return;
+  document.getElementById('assignGroupsBtn').onclick = /* ... Twoja funkcja ... */;
 
-    try {
-      await post('/api/submissions/assign', {});
-      Swal.fire({
-        icon: 'success',
-        title: 'Przypisano',
-        text: 'Zgłoszenia zostały przypisane do grup',
-        timer: 1800,
-        showConfirmButton: false
-      });
-      await loadSubmissions();
-    } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Błąd',
-        text: 'Nie udało się przypisać zgłoszeń\n' + (err.message || '')
-      });
-    }
-  };
-
+  // pierwsze ładowanie bez filtra
   await loadSubmissions();
 }
 
@@ -129,12 +130,15 @@ async function loadSubmissions() {
   container.innerHTML = '<div class="loading">Ładowanie zgłoszeń...</div>';
 
   try {
-    const submissions = await get('/api/submissions');
+    const url = search
+      ? `/api/submissions?search=${encodeURIComponent(search)}`
+      : '/api/submissions';
+    const submissions = await get(url);
 
     container.innerHTML = '';
 
     if (submissions.length === 0) {
-      container.innerHTML = '<div class="empty">Brak zgłoszeń</div>';
+      container.innerHTML = '<div class="empty">Brak zgłoszeń' + (search ? ` dla "${search}"` : '') + '</div>';
       return;
     }
 

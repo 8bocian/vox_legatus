@@ -1,6 +1,6 @@
 from typing import Sequence, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.recrutation.infrastructure.models.submission import SubmissionModel
@@ -21,10 +21,18 @@ class SubmissionRepo:
         await session.flush()
         return submission.id
 
-    async def get_all(self, session: AsyncSession) -> Sequence[SubmissionModel]:
-        submissions_results = await session.execute(
-            select(SubmissionModel)
-        )
+    async def get_all(self, session: AsyncSession, search: Optional[str]) -> Sequence[SubmissionModel]:
+        stmt = select(SubmissionModel)
+        if search:
+            stmt = stmt.where(
+                or_(
+                    SubmissionModel.submission_number.ilike(f"%{search}%"),
+                    SubmissionModel.about_me.ilike(f"%{search}%"),
+                    SubmissionModel.subject_1.ilike(f"%{search}%"),
+                    SubmissionModel.subject_2.ilike(f"%{search}%")
+                )
+            )
+        submissions_results = await session.execute(stmt)
         submissions = submissions_results.scalars().all()
         return submissions
 
