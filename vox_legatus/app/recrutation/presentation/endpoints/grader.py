@@ -41,5 +41,5 @@ async def unassign_user_from_grader(
     if not grader.user_id:
         return True
 
-    success = await grader_repo.assing_user(session, grader_id, None)
+    success = await grader_repo.assign_user(session, grader_id, None)
     return success
