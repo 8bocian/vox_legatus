@@ -46,7 +46,7 @@ async function get(endpoint) {
 }
 
 // w api.js
-export async function post(url, data, options = {}) {
+async function post(url, data, options = {}) {
   const headers = options.isFormData ? {} : { 'Content-Type': 'application/json' };
   const body = options.isFormData ? data : JSON.stringify(data);
 
