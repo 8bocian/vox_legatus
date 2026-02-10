@@ -12,7 +12,7 @@ class GraderRepo:
         await session.flush()
         return grader.id
 
-    async def assign_user(self, session: AsyncSession, grader_id:int, user_id: int) -> bool:
+    async def assign_user(self, session: AsyncSession, grader_id:int, user_id: Optional[int]) -> bool:
         grader = await session.get(GraderModel, grader_id)
         grader.user_id = user_id
         return True
