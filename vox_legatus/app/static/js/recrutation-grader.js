@@ -44,7 +44,7 @@ async function loadRandomSubmission() {
   gradeButtons.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('selected'));
 
   try {
-    const data = await get('/api/submissions/get_random');
+    const data = await get('/api/submissions/random');
 
     if (!data || !data.id) {
       noSubmission.classList.remove('hidden');
