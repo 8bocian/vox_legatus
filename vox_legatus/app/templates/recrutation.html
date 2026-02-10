@@ -1,14 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Rekrutacja</title>
-  <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
-  <link rel="stylesheet" href="/static/css/dashboard.css?v={{ timestamp }}" />
+  <title>Rekrutacja – Ocena zgłoszeń</title>
+  <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/recrutation.css?v={{ timestamp }}" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
+<body class="recrutation-grader">
 
+  <nav>
+    <div id="logoutBtn" class="btn">
+      <img src="/static/images/logout-white.svg" alt="Wyloguj" />
+    </div>
+  </nav>
+
+  <main>
+    <h1>Ocena zgłoszeń</h1>
+
+    <div id="currentSubmission" class="submission-card hidden">
+      <div class="submission-header">
+        <h2 id="submissionNumber">Zgłoszenie #...</h2>
+        <div id="groupInfo">Grupa #...</div>
+      </div>
+
+      <div class="submission-content">
+        <div class="section">
+          <h3>O mnie</h3>
+          <div id="aboutMe" class="long-text"></div>
+        </div>
+
+        <div class="section">
+          <h3>Temat 1</h3>
+          <div id="subject1" class="topic"></div>
+          <h4>Odpowiedź:</h4>
+          <div id="answer1" class="long-text"></div>
+        </div>
+
+        <div class="section">
+          <h3>Temat 2</h3>
+          <div id="subject2" class="topic"></div>
+          <h4>Odpowiedź:</h4>
+          <div id="answer2" class="long-text"></div>
+        </div>
+      </div>
+
+      <div class="grading-section">
+        <h3>Twoja ocena</h3>
+        <div class="grade-buttons" id="gradeButtons"></div>
+        <button id="saveGradeBtn" class="btn primary large" disabled>Zapisz ocenę</button>
+      </div>
+    </div>
+
+    <div id="noSubmission" class="empty-message">
+      <p>Brak dostępnych zgłoszeń do oceny w tej chwili.</p>
+      <button id="getNextBtn" class="btn primary">Pobierz zgłoszenie</button>
+    </div>
+
+    <div id="loading" class="loading hidden">Pobieranie zgłoszenia...</div>
+  </main>
+
+  <script type="module" src="/static/js/api.js?v={{ timestamp }}"></script>
+  <script type="module" src="/static/js/recrutation-grader.js?v={{ timestamp }}"></script>
 </body>
 </html>

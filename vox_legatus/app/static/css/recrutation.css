@@ -1,0 +1,88 @@
+.recrutation-grader main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.submission-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  padding: 24px;
+}
+
+.submission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.section {
+  margin-bottom: 28px;
+}
+
+.section h3, .section h4 {
+  margin: 0 0 8px;
+  color: #444;
+}
+
+.long-text {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  background: #fafafa;
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.grading-section {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.grade-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 16px 0 24px;
+}
+
+.grade-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: white;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.grade-btn:hover {
+  background: #f0f0f0;
+}
+
+.grade-btn.selected {
+  background: #1976d2;
+  color: white;
+  border-color: #1976d2;
+}
+
+.btn.primary.large {
+  padding: 12px 32px;
+  font-size: 1.1em;
+  min-width: 220px;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666;
+  font-size: 1.1em;
+}
