@@ -114,50 +114,82 @@ async function loadGradersForGroup(groupId, graderIds) {
       div.className = `grader-item ${className}`;
       div.innerHTML = `
         <div>Grader #${grader.grader_id} – ${userInfo}</div>
-        ${grader.user_id ? `
-          <div class="btn remove-user" data-grader-id="${grader.grader_id}" title="Odłącz użytkownika">
-            <img src="/static/images/delete.svg" alt="odłącz" />
-          </div>
-        ` : `
-          <div class="btn assign-user" data-grader-id="${grader.grader_id}" title="Przypisz użytkownika">
-            <img src="/static/images/add.svg" alt="przypisz" />
-          </div>
-        `}
+        <div class="grader-actions">
+          ${
+            grader.user_id
+              ? `
+                <div class="btn remove-user" data-grader-id="${grader.grader_id}" title="Odłącz użytkownika">
+                  <img src="/static/images/delete.svg" alt="odłącz" />
+                </div>
+              `
+              : `
+                <div class="btn assign-user" data-grader-id="${grader.grader_id}" title="Przypisz użytkownika">
+                  <img src="/static/images/add.svg" alt="przypisz" />
+                </div>
+                <div class="btn delete-grader" data-grader-id="${grader.grader_id}" title="Usuń tego gracera">
+                  <img src="/static/images/bin.svg" alt="usuń gracera" />
+                </div>
+              `
+          }
+        </div>
       `;
 
       container.appendChild(div);
 
       if (grader.user_id) {
         div.querySelector('.remove-user').onclick = async () => {
-          if (!confirm('Odpiąć użytkownika od tego Gradera? (Grader pozostanie pusty)')) return;
+          if (!confirm('Odpiąć użytkownika od tego Gradera?')) return;
 
           try {
-            // ────────────── NOWY ENDPOINT ──────────────
-            await post(`/api/grader/${grader.grader_id}/unassign`, {});
-            // lub jeśli dodałeś PATCH: await put(`/api/grader/${grader.grader_id}/unassign`, {});
+            // Jeśli masz endpoint do odpinania użytkownika:
+            // await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}/user`);
 
-            // Odświeżamy tylko graderów w tej grupie
+            // Jeśli nie masz – usuwasz całego gracera (tymczasowe rozwiązanie):
+            await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
+
             refreshGroupsList();
 
             Swal.fire({
               icon: 'success',
               title: 'Udało się',
-              text: 'Użytkownik odpięty',
+              text: 'Użytkownik odpięty / Grader usunięty',
               timer: 1400,
               showConfirmButton: false
             });
           } catch (err) {
-            console.error(err);
             Swal.fire({
               icon: 'error',
               title: 'Błąd',
-              text: 'Nie udało się odpiąć użytkownika\n' + (err.message || 'Sprawdź konsolę')
+              text: 'Nie udało się wykonać operacji'
             });
           }
         };
       } else {
         div.querySelector('.assign-user').onclick = () => {
           showAssignUserPopup(grader.grader_id, groupId);
+        };
+
+        div.querySelector('.delete-grader').onclick = async () => {
+          if (!confirm('Na pewno usunąć tego pustego Gradera?')) return;
+
+          try {
+            await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
+            refreshGroupsList();
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Usunięto',
+              text: 'Grader usunięty',
+              timer: 1400,
+              showConfirmButton: false
+            });
+          } catch (err) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Błąd',
+              text: 'Nie udało się usunąć Gradera'
+            });
+          }
         };
       }
     } catch (err) {
