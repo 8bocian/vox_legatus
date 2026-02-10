@@ -82,7 +82,7 @@ class SubmissionRepo:
 
         submissions = await session.execute(stmt)
         for submission in submissions:
-            await session.delete(submission)
+            submission.group_id = None
 
 
     async def delete_all(self, session: AsyncSession):
