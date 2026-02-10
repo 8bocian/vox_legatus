@@ -137,7 +137,7 @@ async function loadGradersForGroup(groupId, graderIds) {
             // lub jeśli dodałeś PATCH: await put(`/api/grader/${grader.grader_id}/unassign`, {});
 
             // Odświeżamy tylko graderów w tej grupie
-            await renderGradersForGroup(groupId);
+            await loadGradersForGroup(groupId);
 
             Swal.fire({
               icon: 'success',
