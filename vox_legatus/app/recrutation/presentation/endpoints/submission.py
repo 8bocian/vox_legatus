@@ -51,7 +51,7 @@ async def get_random(
         session: Annotated[AsyncSession, Depends(get_db)],
         submission_repo: Annotated[SubmissionRepo, Depends()],
         grader_repo: Annotated[GraderRepo, Depends()],
-) -> list[SubmissionGraderRead]:
+) -> SubmissionGraderRead:
     graders = await grader_repo.get_by_user_id(session, user.id)
     grader = graders[0]
     random_submission = await submission_repo.get_random_for_grader(session, grader.id)
