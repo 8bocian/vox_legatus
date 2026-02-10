@@ -12,7 +12,7 @@ class SubmissionCreate(BaseModel):
 
 class SubmissionRead(BaseModel):
     id: int
-    group_id: int
+    group_id: Optional[int]
     submission_number: str
     about_me: str
     subject_1: str
