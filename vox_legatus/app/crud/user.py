@@ -38,6 +38,7 @@ async def get_user(db: AsyncSession, user_id: Optional[int] = None, email: Optio
 
 async def get_users_by_role(db: AsyncSession, roles: list[Role]):
     query = select(User)
+    print(roles)
     query = query.where(User.role.in_(roles))
 
 

@@ -41,9 +41,12 @@ async def get_users(
 @router.get("/recrutation", response_model=List[UserRead])
 async def get_recrutation_users(
         session: Annotated[AsyncSession, Depends(get_db)],
+        admin: User = Depends(require_role(Role.ADMIN)),
 ):
     roles = (Role.ADMIN, Role.GRADER)
     users = (await user_crud.get_users_by_role(session, roles))
+    print("TEST")
+
     # print(users[0].email)
     print(users)
     users_schema = [
