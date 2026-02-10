@@ -23,7 +23,7 @@ class SubmissionRepo:
         await session.flush()
         return submission.id
 
-    async def get_all(self, session: AsyncSession, search: Optional[str]) -> Sequence[SubmissionModel]:
+    async def get_all(self, session: AsyncSession, search: Optional[str]=None) -> Sequence[SubmissionModel]:
         stmt = select(SubmissionModel)
         if search:
             stmt = stmt.where(
