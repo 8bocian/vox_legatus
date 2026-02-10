@@ -27,7 +27,7 @@ async def get_grader(
     )
 
 
-@router.patch("/{grader_id}/unassign")
+@router.post("/{grader_id}/unassign")
 async def unassign_user_from_grader(
     admin: Annotated[User, Depends(require_role(Role.ADMIN))],
     grader_id: Annotated[int, Path()],
