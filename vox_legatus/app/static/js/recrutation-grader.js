@@ -5,7 +5,6 @@ const noSubmission = document.getElementById('noSubmission');
 const loading = document.getElementById('loading');
 const getNextBtn = document.getElementById('getNextBtn');
 const saveGradeBtn = document.getElementById('saveGradeBtn');
-const skipBtn = document.getElementById('skipBtn');
 const gradeButtons = document.getElementById('gradeButtons');
 
 const logoutBtn = document.getElementById('logoutBtn');
@@ -53,8 +52,6 @@ async function loadRandomSubmission() {
 
     currentSubmissionId = data.id;
 
-    document.getElementById('submissionTitle').textContent = `Zgłoszenie #${data.submission_number || data.id}`;
-    document.getElementById('groupInfo').textContent = data.group_id ? `Grupa #${data.group_id}` : 'Nieprzypisana grupa';
     document.getElementById('aboutMe').textContent = data.about_me || '—';
     document.getElementById('subject1').textContent = data.subject_1 || '—';
     document.getElementById('answer1').textContent = data.subject_1_answer || '—';
@@ -136,7 +133,6 @@ logoutBtn.onclick = async () => {
 
 getNextBtn.onclick = loadRandomSubmission;
 saveGradeBtn.onclick = saveGrade;
-skipBtn.onclick = loadRandomSubmission; // skip = po prostu następne
 
 // start
 loadRandomSubmission();

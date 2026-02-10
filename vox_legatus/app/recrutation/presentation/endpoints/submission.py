@@ -66,13 +66,11 @@ async def get_random(
 
     return SubmissionGraderRead(
         id=random_submission.id,
-        submission_number=random_submission.submission_number,
         about_me=random_submission.about_me,
         subject_1=random_submission.subject_1,
         subject_2=random_submission.subject_2,
         subject_1_answer=random_submission.subject_1_answer,
         subject_2_answer=random_submission.subject_2_answer,
-        group_id=grader.group_id,
         already_graded=False
     )
 
