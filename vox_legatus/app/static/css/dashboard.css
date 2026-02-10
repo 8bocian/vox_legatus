@@ -604,3 +604,45 @@ input:checked + .slider:before {
 .btn.primary:hover {
   background: #1565c0;
 }
+
+.submission-row.clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.submission-row.clickable:hover {
+  background: #f0f7ff;
+}
+
+.submission-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-weight: 600;
+  color: #444;
+  font-size: 0.95em;
+}
+
+.field-value {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.field-value.long-text {
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  max-height: 320px;
+  overflow-y: auto;
+}

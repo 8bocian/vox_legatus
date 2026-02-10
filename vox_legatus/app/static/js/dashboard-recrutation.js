@@ -1,6 +1,14 @@
 import { get, post, del } from './api.js';
 import { openPopup, closePopup } from './dashboard-popup.js';
 
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 // ──────────────────────────────────────────────────────
 // Główna funkcja ładowania zakładki Rekrutacja
@@ -151,15 +159,23 @@ async function loadSubmissions() {
 
     submissions.forEach(sub => {
       const row = document.createElement('tr');
+      row.className = 'submission-row clickable'; // ← dodajemy klasę do stylizacji kursora
+
       row.innerHTML = `
         <td>${sub.submission_number || '-'}</td>
-        <td>${sub.about_me?.substring(0, 80) || ''}${sub.about_me?.length > 80 ? '...' : ''}</td>
-        <td>${sub.subject_1 || '-'}</td>
-        <td>${sub.subject_1_answer?.substring(0, 60) || ''}${sub.subject_1_answer?.length > 60 ? '...' : ''}</td>
-        <td>${sub.subject_2 || '-'}</td>
-        <td>${sub.subject_2_answer?.substring(0, 60) || ''}${sub.subject_2_answer?.length > 60 ? '...' : ''}</td>
+        <td>${escapeHtml(sub.about_me?.substring(0, 80) || '')}${sub.about_me?.length > 80 ? '...' : ''}</td>
+        <td>${escapeHtml(sub.subject_1 || '-')}</td>
+        <td>${escapeHtml(sub.subject_1_answer?.substring(0, 60) || '')}${sub.subject_1_answer?.length > 60 ? '...' : ''}</td>
+        <td>${escapeHtml(sub.subject_2 || '-')}</td>
+        <td>${escapeHtml(sub.subject_2_answer?.substring(0, 60) || '')}${sub.subject_2_answer?.length > 60 ? '...' : ''}</td>
         <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
       `;
+
+      // Kliknięcie w wiersz otwiera popup z pełną treścią
+      row.addEventListener('click', () => {
+        showSubmissionDetailPopup(sub);
+      });
+
       tbody.appendChild(row);
     });
 
@@ -168,6 +184,62 @@ async function loadSubmissions() {
     console.error(err);
     container.innerHTML = '<div class="error">Błąd ładowania zgłoszeń</div>';
   }
+}
+
+function showSubmissionDetailPopup(sub) {
+  popupTitle.innerHTML = `Zgłoszenie #${sub.submission_number || sub.id || '?'}`;
+
+  popupContent.innerHTML = `
+    <div class="submission-detail">
+      <div class="detail-field">
+        <div class="field-label">Numer zgłoszenia:</div>
+        <div class="field-value">${sub.submission_number || '-'}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">O mnie:</div>
+        <div class="field-value long-text">${escapeHtml(sub.about_me || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Temat 1:</div>
+        <div class="field-value">${escapeHtml(sub.subject_1 || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Odpowiedź na temat 1:</div>
+        <div class="field-value long-text">${escapeHtml(sub.subject_1_answer || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Temat 2:</div>
+        <div class="field-value">${escapeHtml(sub.subject_2 || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Odpowiedź na temat 2:</div>
+        <div class="field-value long-text">${escapeHtml(sub.subject_2_answer || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Przypisana grupa:</div>
+        <div class="field-value">${sub.group_id ? `Grupa #${sub.group_id}` : 'Nieprzypisane'}</div>
+      </div>
+    </div>
+  `;
+
+  // chowamy przycisk "Utwórz" – nie jest potrzebny w podglądzie
+  createBtn.style.display = 'none';
+
+  openPopup();
+
+  // po zamknięciu popupu przywracamy widoczność przycisku (na wszelki wypadek)
+  const closeHandler = () => {
+    createBtn.style.display = '';
+    closePopup();
+    document.getElementById('closeBtn').removeEventListener('click', closeHandler);
+  };
+  document.getElementById('closeBtn').addEventListener('click', closeHandler);
 }
 
 // ──────────────────────────────────────────────────────
