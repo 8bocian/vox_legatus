@@ -115,7 +115,7 @@ async def get_submissions_with_grades(
             avg = sum(grade.grade for grade in grades_real)/len(grades_real)
         else:
             avg = 0
-        graded_submission = SubmissionGraderRead(
+        graded_submission = SubmissionGradedRead(
             submission=submission_details,
             grades=grades_real,
             avg=avg
