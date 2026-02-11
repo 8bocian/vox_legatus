@@ -1,6 +1,8 @@
 from typing import Optional
 from pydantic import BaseModel
 
+from app.recrutation.presentation.schemas.grade import GradeRead
+
 
 class SubmissionCreate(BaseModel):
     submission_number: str
@@ -31,3 +33,8 @@ class SubmissionGraderRead(BaseModel):
     subject_1_answer: str
     subject_2_answer: str
     already_graded: bool
+
+class SubmissionGradedRead(BaseModel):
+    submission: SubmissionRead
+    grades: list[GradeRead]
+    avg: float

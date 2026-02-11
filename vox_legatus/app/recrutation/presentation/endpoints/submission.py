@@ -16,7 +16,7 @@ from app.recrutation.infrastructure.repositories.grading_group_repository import
 from app.recrutation.infrastructure.repositories.submission_repository import SubmissionRepo
 from app.recrutation.presentation.schemas.submission import SubmissionCreate, SubmissionRead, SubmissionGradeRequest
 from app.recrutation.presentation.schemas.grade import GradeRead
-from app.recrutation.presentation.schemas.submission import SubmissionGraderRead
+from app.recrutation.presentation.schemas.submission import SubmissionGraderRead, SubmissionGradedRead
 from app.crud import user as user_crud
 
 router = APIRouter()
@@ -74,6 +74,55 @@ async def get_random(
         already_graded=False
     )
 
+
+
+@router.get("/grades")
+async def get_submissions_with_grades(
+        user: Annotated[User, Depends(require_role([Role.GRADER, Role.ADMIN]))],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        submission_repo: Annotated[SubmissionRepo, Depends()],
+        grader_repo: Annotated[GraderRepo, Depends()],
+        grade_repo: Annotated[GradeRepo, Depends()],
+        search: Annotated[Optional[str], Query(max_length=64)] = None,
+
+) -> Sequence[SubmissionGradedRead]:
+    graded_submissions: list[SubmissionGradeRequest] = []
+    for submission in await submission_repo.get_all(session, search):
+        submission_details = SubmissionRead(
+            id = submission.id,
+            group_id = submission.group_id,
+            submission_number = submission.submission_number,
+            about_me = submission.about_me,
+            subject_1 = submission.subject_1,
+            subject_2 = submission.subject_2,
+            subject_1_answer = submission.subject_1_answer,
+            subject_2_answer = submission.subject_2_answer
+        )
+        grades = await grade_repo.get_for_submission(session, submission.id)
+        grades_real: list[GradeRead] = []
+        for grade in grades:
+            grader = await grader_repo.get(session, grade.grader_id)
+            user = await user_crud.get_user(session, grader.user_id)
+            grades_real.append(
+                GradeRead(
+                    username=f"{user.name} {user.surname}",
+                    grade=grade.grade,
+                    grader_id=grader.id,
+                    grade_id=grade.id
+                )
+            )
+        if len(grades_real):
+            avg = sum(grade.grade for grade in grades_real)/len(grades_real)
+        else:
+            avg = 0
+        graded_submission = SubmissionGraderRead(
+            submission=submission_details,
+            grades=grades_real,
+            avg=avg
+        )
+        graded_submissions.append(graded_submission)
+    sorted_graded_submissions = sorted(graded_submissions, key = lambda x: x.avg, reverse=True)
+    return sorted_graded_submissions
 
 @router.get("")
 async def get_submissions(
@@ -134,29 +183,6 @@ async def get_submission(
         return None
 
 
-@router.get("/{submission_id}/grades")
-async def get_submission_grades(
-        user: Annotated[User, Depends(require_role([Role.GRADER, Role.ADMIN]))],
-        session: Annotated[AsyncSession, Depends(get_db)],
-        submission_id: Annotated[int, Path()],
-        submission_repo: Annotated[SubmissionRepo, Depends()],
-        grader_repo: Annotated[GraderRepo, Depends()],
-        grade_repo: Annotated[GradeRepo, Depends()]
-) -> Sequence[GradeRead]:
-    grades = await grade_repo.get_for_submission(session, submission_id)
-    grades_real: list[GradeRead] = []
-    for grade in grades:
-        grader = await grader_repo.get(session, grade.grader_id)
-        user = await user_crud.get_user(session, grader.user_id)
-        grades_real.append(
-            GradeRead(
-                username=f"{user.name} {user.surname}",
-                grade=grade.grade,
-                grader_id=grader.id,
-                grade_id=grade.id
-            )
-        )
-    return grades_real
 
 @router.post("/{submission_id}/grade")
 async def grade_submission(

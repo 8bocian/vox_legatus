@@ -745,3 +745,51 @@ input:checked + .slider:before {
     width: 100%;
   }
 }
+
+/* W zakładce Wyniki – kolumna ocen */
+.results-table td {
+  vertical-align: middle;
+}
+
+.has-grades {
+  font-weight: 500;
+  color: #2e7d32; /* zielony akcent dla wierszy z ocenami */
+}
+
+.grades-count {
+  font-size: 0.85em;
+  color: #777;
+  margin-left: 6px;
+  font-weight: normal;
+}
+
+/* Poprawiona kolumna ocen w zakładce Wyniki */
+.grades-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  align-items: center;
+}
+
+.grades-inline .avg-grade {
+  font-weight: 600;
+  color: #1976d2;
+  margin-left: 8px;
+  font-size: 0.95em;
+}
+
+.has-grades {
+  font-weight: 500;
+}
+
+/* Responsywność – długie listy ocen nie psują tabeli */
+@media (max-width: 768px) {
+  .grades-inline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .grades-inline .avg-grade {
+    margin-left: 0;
+  }
+}

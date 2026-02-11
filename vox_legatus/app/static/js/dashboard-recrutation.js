@@ -89,14 +89,14 @@ async function loadResults(search = '') {
 
   try {
     const url = search.trim()
-      ? `/api/submissions?search=${encodeURIComponent(search.trim())}`
-      : '/api/submissions';
+      ? `/api/submissions/grades?search=${encodeURIComponent(search.trim())}`
+      : '/api/submissions/grades';
 
-    const submissions = await get(url);
+    const data = await get(url);  // ← dostajemy listę SubmissionGradedRead
 
     container.innerHTML = '';
 
-    if (submissions.length === 0) {
+    if (!data || data.length === 0) {
       container.innerHTML = search.trim()
         ? `<div class="empty">Brak wyników pasujących do "${escapeHtml(search)}"</div>`
         : '<div class="empty">Brak ocenionych zgłoszeń</div>';
@@ -112,7 +112,7 @@ async function loadResults(search = '') {
           <th>Temat 1</th>
           <th>Temat 2</th>
           <th>Grupa</th>
-          <th>Oceny</th>
+          <th>Oceny (średnia)</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -120,21 +120,17 @@ async function loadResults(search = '') {
 
     const tbody = table.querySelector('tbody');
 
-    for (const sub of submissions) {
-      // pobieramy oceny dla tego zgłoszenia
-      let gradesInfo = '—';
-      let gradesCount = 0;
+    data.forEach(item => {
+      const sub = item.submission;
+      const grades = item.grades || [];
+      const avg = item.avg?.toFixed(2) || '—';
 
-      try {
-        const grades = await get(`/api/submissions/${sub.id}/grades`);
-        gradesCount = grades.length;
-        if (grades.length > 0) {
-          const avg = grades.reduce((sum, g) => sum + g.grade, 0) / grades.length;
-          gradesInfo = `${grades.length} × średnia: ${avg.toFixed(2)}`;
-        }
-      } catch (err) {
-        console.warn(`Nie udało się pobrać ocen dla submission ${sub.id}`, err);
-      }
+      // czytelna lista ocen: "Oskar: 4.5, Ania: 3.0"
+      let gradesDisplay = grades.length === 0
+        ? '—'
+        : grades
+            .map(g => `${escapeHtml(g.username.split(' ')[0])}: ${g.grade.toFixed(1)}`)
+            .join(', ');
 
       const row = document.createElement('tr');
       row.className = 'submission-row clickable';
@@ -148,8 +144,11 @@ async function loadResults(search = '') {
           ${escapeHtml(sub.subject_2?.substring(0, 70) || '-')}${sub.subject_2?.length > 70 ? '...' : ''}
         </td>
         <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
-        <td class="${gradesCount > 0 ? 'has-grades' : ''}">
-          ${gradesInfo}
+        <td class="${grades.length > 0 ? 'has-grades' : ''}">
+          <div class="grades-inline">
+            ${gradesDisplay}
+            ${grades.length > 0 ? `<span class="avg-grade"> (śr: ${avg})</span>` : ''}
+          </div>
         </td>
       `;
 
@@ -158,16 +157,14 @@ async function loadResults(search = '') {
       });
 
       tbody.appendChild(row);
-    }
+    });
 
     container.appendChild(table);
   } catch (err) {
     console.error('Błąd ładowania wyników:', err);
     container.innerHTML = '<div class="error">Błąd ładowania wyników</div>';
   }
-}
-
-// ──────────────────────────────────────────────────────
+}// ──────────────────────────────────────────────────────
 // Zakładka: Grupy oceniające
 // ──────────────────────────────────────────────────────
 async function renderGroupsTab() {
