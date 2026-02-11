@@ -92,7 +92,7 @@ async function loadResults(search = '') {
       ? `/api/submissions/grades?search=${encodeURIComponent(search.trim())}`
       : '/api/submissions/grades';
 
-    const data = await get(url);  // ← dostajemy listę SubmissionGradedRead
+    const data = await get(url);  // lista SubmissionGradedRead
 
     container.innerHTML = '';
 
@@ -108,9 +108,8 @@ async function loadResults(search = '') {
     table.innerHTML = `
       <thead>
         <tr>
+          <th>Miejsce</th>
           <th>Nr zgłoszenia</th>
-          <th>Temat 1</th>
-          <th>Temat 2</th>
           <th>Grupa</th>
           <th>Oceny (średnia)</th>
         </tr>
@@ -120,15 +119,19 @@ async function loadResults(search = '') {
 
     const tbody = table.querySelector('tbody');
 
-    data.forEach(item => {
+    data.forEach((item, index) => {
       const sub = item.submission;
       const grades = item.grades || [];
       const avg = item.avg?.toFixed(2) || '—';
 
-      // czytelna lista ocen: "Oskar: 4.5, Ania: 3.0"
-      let gradesDisplay = grades.length === 0
+      // Sortujemy oceny alfabetycznie po username
+      const sortedGrades = [...grades].sort((a, b) =>
+        a.username.localeCompare(b.username)
+      );
+
+      let gradesDisplay = sortedGrades.length === 0
         ? '—'
-        : grades
+        : sortedGrades
             .map(g => `${escapeHtml(g.username.split(' ')[0])}: ${g.grade.toFixed(1)}`)
             .join(', ');
 
@@ -136,18 +139,13 @@ async function loadResults(search = '') {
       row.className = 'submission-row clickable';
 
       row.innerHTML = `
+        <td class="place">${index + 1}</td>
         <td>${escapeHtml(sub.submission_number || '-')}</td>
-        <td title="${escapeHtml(sub.subject_1 || '')}">
-          ${escapeHtml(sub.subject_1?.substring(0, 70) || '-')}${sub.subject_1?.length > 70 ? '...' : ''}
-        </td>
-        <td title="${escapeHtml(sub.subject_2 || '')}">
-          ${escapeHtml(sub.subject_2?.substring(0, 70) || '-')}${sub.subject_2?.length > 70 ? '...' : ''}
-        </td>
         <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
-        <td class="${grades.length > 0 ? 'has-grades' : ''}">
+        <td class="${sortedGrades.length > 0 ? 'has-grades' : ''}">
           <div class="grades-inline">
             ${gradesDisplay}
-            ${grades.length > 0 ? `<span class="avg-grade"> (śr: ${avg})</span>` : ''}
+            ${sortedGrades.length > 0 ? `<span class="avg-grade"> (śr: ${avg})</span>` : ''}
           </div>
         </td>
       `;
@@ -164,7 +162,7 @@ async function loadResults(search = '') {
     console.error('Błąd ładowania wyników:', err);
     container.innerHTML = '<div class="error">Błąd ładowania wyników</div>';
   }
-}// ──────────────────────────────────────────────────────
+}
 // Zakładka: Grupy oceniające
 // ──────────────────────────────────────────────────────
 async function renderGroupsTab() {
