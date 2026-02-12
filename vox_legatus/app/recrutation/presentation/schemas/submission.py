@@ -38,3 +38,11 @@ class SubmissionGradedRead(BaseModel):
     submission: SubmissionRead
     grades: list[GradeRead]
     avg: float
+
+class SingleSubmissionGradedRead(BaseModel):
+    submission_id: int
+    submission_number: str
+    subject_1: str
+    subject_2: str
+    grade_id: int
+    grade: float

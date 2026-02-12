@@ -6,13 +6,35 @@ const loading = document.getElementById('loading');
 const getNextBtn = document.getElementById('getNextBtn');
 const saveGradeBtn = document.getElementById('saveGradeBtn');
 const gradeButtons = document.getElementById('gradeButtons');
-
 const logoutBtn = document.getElementById('logoutBtn');
 
 let currentSubmissionId = null;
 let selectedGrade = null;
 
-// Generowanie przycisków ocen 0.0 – 6.0 co 0.5
+// Tabs handling
+const tabs = document.querySelectorAll('.tab-btn');
+const tabContents = {
+  grading: document.getElementById('currentSubmission').parentElement, // zakładka oceniania
+  'my-grades': document.getElementById('myGradesTab')
+};
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    Object.values(tabContents).forEach(c => c.classList.add('hidden'));
+    tabContents[tab.dataset.tab].classList.remove('hidden');
+
+    if (tab.dataset.tab === 'my-grades') {
+      loadMyGrades();
+    }
+  });
+});
+
+// ──────────────────────────────────────────────────────
+// Generowanie przycisków ocen
+// ──────────────────────────────────────────────────────
 function createGradeButtons() {
   gradeButtons.innerHTML = '';
   for (let i = 0; i <= 12; i++) {
@@ -33,6 +55,9 @@ function createGradeButtons() {
   }
 }
 
+// ──────────────────────────────────────────────────────
+// Ładowanie losowego zgłoszenia do oceny
+// ──────────────────────────────────────────────────────
 async function loadRandomSubmission() {
   currentSubmission.classList.add('hidden');
   noSubmission.classList.add('hidden');
@@ -67,10 +92,12 @@ async function loadRandomSubmission() {
   }
 }
 
+// ──────────────────────────────────────────────────────
+// Zapisywanie oceny
+// ──────────────────────────────────────────────────────
 async function saveGrade() {
   if (!currentSubmissionId || selectedGrade === null) return;
 
-  // proste potwierdzenie w Swal
   const result = await Swal.fire({
     title: 'Potwierdzenie',
     html: `Czy na pewno chcesz zapisać ocenę <strong>${selectedGrade}</strong>?`,
@@ -96,7 +123,6 @@ async function saveGrade() {
       showConfirmButton: false
     });
 
-    // po sukcesie → od razu kolejne zgłoszenie
     loadRandomSubmission();
   } catch (err) {
     let msg = 'Nie udało się zapisać oceny';
@@ -114,7 +140,198 @@ async function saveGrade() {
   }
 }
 
-// Inicjalizacja
+// ──────────────────────────────────────────────────────
+// Zakładka: Moje oceny
+// ──────────────────────────────────────────────────────
+async function loadMyGrades(search = '') {
+  const container = document.getElementById('myGradesList');
+  if (!container) return;
+
+  container.innerHTML = '<div class="loading">Ładowanie moich ocen...</div>';
+
+  try {
+    const url = search.trim()
+      ? `/api/grade/my_grades?search=${encodeURIComponent(search.trim())}`
+      : '/api/grade/my_grades';
+
+    const gradedSubs = await get(url);
+
+    container.innerHTML = '';
+
+    if (gradedSubs.length === 0) {
+      container.innerHTML = search.trim()
+        ? `<div class="empty">Brak ocenionych zgłoszeń pasujących do "${escapeHtml(search)}"</div>`
+        : '<div class="empty">Nie oceniłeś jeszcze żadnego zgłoszenia</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'submissions-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Nr zgłoszenia</th>
+          <th>Temat 1</th>
+          <th>Temat 2</th>
+          <th>Twoja ocena</th>
+          <th>Akcja</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    gradedSubs.forEach(item => {
+      const row = document.createElement('tr');
+      row.className = 'submission-row clickable';
+
+      row.innerHTML = `
+        <td>${escapeHtml(item.submission_number || '-')}</td>
+        <td title="${escapeHtml(item.subject_1 || '')}">
+          ${escapeHtml(item.subject_1?.substring(0, 50) || '-')}${item.subject_1?.length > 50 ? '...' : ''}
+        </td>
+        <td title="${escapeHtml(item.subject_2 || '')}">
+          ${escapeHtml(item.subject_2?.substring(0, 50) || '-')}${item.subject_2?.length > 50 ? '...' : ''}
+        </td>
+        <td class="grade-value">${item.grade.toFixed(1)}</td>
+        <td>
+          <button class="change-grade-btn" data-grade-id="${item.grade_id}">Zgłoś zmianę oceny</button>
+        </td>
+      `;
+
+      // kliknięcie w wiersz → pokazuje szczegóły zgłoszenia (jak w panelu admina)
+      row.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('change-grade-btn')) {
+          showSubmissionDetailPopup({
+            id: item.submission_id,
+            submission_number: item.submission_number,
+            subject_1: item.subject_1,
+            subject_2: item.subject_2,
+            // jeśli masz więcej pól – możesz je dodać
+          });
+        }
+      });
+
+      // przycisk Zgłoś zmianę oceny
+      row.querySelector('.change-grade-btn').onclick = (e) => {
+        e.stopPropagation();
+        showChangeGradePopup(item);
+      };
+
+      tbody.appendChild(row);
+    });
+
+    container.appendChild(table);
+  } catch (err) {
+    console.error('Błąd ładowania moich ocen:', err);
+    container.innerHTML = '<div class="error">Błąd ładowania ocen</div>';
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// Popup zgłoszenia zmiany oceny
+// ──────────────────────────────────────────────────────
+function showChangeGradePopup(item) {
+  popupTitle.innerHTML = `Zgłoś zmianę oceny dla zgłoszenia #${item.submission_number || item.submission_id}`;
+
+  popupContent.innerHTML = `
+    <div class="submission-detail">
+      <div class="detail-field">
+        <div class="field-label">Poprzednia ocena:</div>
+        <div class="field-value">${item.grade.toFixed(1)}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Nowa ocena:</div>
+        <div id="newGradeButtons" class="grade-buttons"></div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Uzasadnienie zmiany:</div>
+        <textarea id="explanation" rows="5" placeholder="Wpisz powód zmiany oceny..." style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd;"></textarea>
+      </div>
+    </div>
+
+    <div class="ticket-actions">
+      <button id="cancelChangeBtn" class="btn secondary">Anuluj</button>
+      <button id="submitChangeBtn" class="btn primary" disabled>Wyślij zgłoszenie</button>
+    </div>
+  `;
+
+  createBtn.style.display = 'none';
+  openPopup();
+
+  let selectedNewGrade = null;
+
+  // przyciski nowej oceny
+  const newGradeContainer = document.getElementById('newGradeButtons');
+  for (let i = 0; i <= 12; i++) {
+    const val = (i * 0.5).toFixed(1);
+    const btn = document.createElement('button');
+    btn.className = 'grade-btn';
+    btn.textContent = val;
+    btn.dataset.value = val;
+
+    btn.onclick = () => {
+      newGradeContainer.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedNewGrade = parseFloat(val);
+      document.getElementById('submitChangeBtn').disabled = false;
+    };
+
+    newGradeContainer.appendChild(btn);
+  }
+
+  // anuluj
+  document.getElementById('cancelChangeBtn').onclick = () => {
+    closePopup();
+  };
+
+  // wyślij zgłoszenie
+  document.getElementById('submitChangeBtn').onclick = async () => {
+    const explanation = document.getElementById('explanation').value.trim();
+
+    if (!selectedNewGrade) {
+      Swal.fire({ icon: 'warning', title: 'Wybierz nową ocenę' });
+      return;
+    }
+
+    if (!explanation) {
+      Swal.fire({ icon: 'warning', title: 'Podaj uzasadnienie zmiany' });
+      return;
+    }
+
+    try {
+      await post('/api/tickets', {
+        grade_id: item.grade_id,
+        new_grade: selectedNewGrade,
+        explanation: explanation
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Zgłoszenie wysłane',
+        text: 'Zmiana oceny została zgłoszona do akceptacji',
+        timer: 1800
+      });
+
+      closePopup();
+      // opcjonalnie: odśwież zakładkę moich ocen
+      loadMyGrades();
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Błąd',
+        text: 'Nie udało się wysłać zgłoszenia\n' + (err.message || '')
+      });
+    }
+  };
+}
+
+// ──────────────────────────────────────────────────────
+// Inicjalizacja strony
+// ──────────────────────────────────────────────────────
 createGradeButtons();
 
 logoutBtn.onclick = async () => {
@@ -134,5 +351,5 @@ logoutBtn.onclick = async () => {
 getNextBtn.onclick = loadRandomSubmission;
 saveGradeBtn.onclick = saveGrade;
 
-// start
+// start – ładowanie pierwszego zgłoszenia do oceny
 loadRandomSubmission();

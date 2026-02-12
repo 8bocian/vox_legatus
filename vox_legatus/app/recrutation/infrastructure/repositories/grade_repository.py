@@ -21,6 +21,12 @@ class GradeRepo:
         return grades_result.scalars().all()
 
 
+    async def change_grade(self, session: AsyncSession, grade_id: int, new_grade: float) -> int:
+        grade = await session.get(GradeModel, grade_id)
+        grade.grade = new_grade
+        return grade.id
+
+
     async def get_for_submission(self, session: AsyncSession, submission_id: int) -> Sequence[GradeModel]:
         grades_result = await session.execute(
             select(GradeModel).where(GradeModel.submission_id == submission_id)

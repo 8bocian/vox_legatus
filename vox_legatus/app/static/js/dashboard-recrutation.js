@@ -11,7 +11,7 @@ function escapeHtml(unsafe) {
 }
 
 // ──────────────────────────────────────────────────────
-// Główna funkcja (zmodyfikowana)
+// Główna funkcja ładowania zakładki Rekrutacja
 // ──────────────────────────────────────────────────────
 export async function loadRecrutation() {
   title.innerHTML = '<h2>Rekrutacja</h2>';
@@ -21,6 +21,7 @@ export async function loadRecrutation() {
       <button class="tab-btn active" data-tab="groups">Grupy oceniające</button>
       <button class="tab-btn" data-tab="submissions">Zgłoszenia</button>
       <button class="tab-btn" data-tab="results">Wyniki</button>
+      <button class="tab-btn" data-tab="tickets">Zgłoszenia zmian</button>
     </div>
 
     <div id="tabContent" class="tab-content"></div>
@@ -35,15 +36,115 @@ export async function loadRecrutation() {
       if (tab === 'groups')       renderGroupsTab();
       else if (tab === 'submissions') renderSubmissionsTab();
       else if (tab === 'results')     renderResultsTab();
+      else if (tab === 'tickets')     renderTicketsTab();
     });
   });
 
-  // domyślnie grupy
+  // domyślnie otwieramy grupy
   renderGroupsTab();
 }
 
 // ──────────────────────────────────────────────────────
-// Zakładka: Wyniki
+// Zakładka: Grupy oceniające
+// ──────────────────────────────────────────────────────
+async function renderGroupsTab() {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = `
+    <div class="column full-width">
+      <div class="column-header">
+        <h3>Grupy oceniające</h3>
+        <div id="addGroupBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj grupę" /></div>
+      </div>
+      <div id="groupsList" class="groups-list"></div>
+    </div>
+  `;
+
+  document.getElementById('addGroupBtn').onclick = () => createNewGradingGroup();
+  await refreshGroupsList();
+}
+
+// ──────────────────────────────────────────────────────
+// Zakładka: Zgłoszenia (oryginalna lista submissions)
+// ──────────────────────────────────────────────────────
+async function renderSubmissionsTab() {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = `
+    <div class="column full-width">
+      <div class="column-header">
+        <h3>Zgłoszenia</h3>
+        <div class="header-actions">
+          <div id="uploadSubmissionsBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj zgłoszenia" /></div>
+          <button id="assignGroupsBtn" class="btn primary">Przypisz do grup</button>
+          <button id="deleteAllSubmissionsBtn" class="btn danger">Usuń wszystkie zgłoszenia</button>
+        </div>
+      </div>
+
+      <div class="search-container">
+        <input
+          type="text"
+          id="submissionSearch"
+          placeholder="Filtruj po numerze zgłoszenia..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div class="search-icon">🔍</div>
+      </div>
+
+      <div id="submissionsList" class="submissions-list"></div>
+    </div>
+  `;
+
+  const searchInput = document.getElementById('submissionSearch');
+  let debounceTimer = null;
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadSubmissions(searchInput.value);
+    }, 350);
+  });
+
+  document.getElementById('uploadSubmissionsBtn').onclick = showUploadSubmissionsPopup;
+
+  document.getElementById('assignGroupsBtn').onclick = async () => {
+    if (!confirm('Na pewno przypisać wszystkie nieprzypisane zgłoszenia do grup?')) return;
+    try {
+      await post('/api/submissions/assign', {});
+      Swal.fire({ icon: 'success', title: 'Sukces', text: 'Zgłoszenia przypisane', timer: 1600 });
+      await loadSubmissions(searchInput.value);
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się przypisać zgłoszeń' });
+    }
+  };
+
+  document.getElementById('deleteAllSubmissionsBtn').onclick = async () => {
+    const result = await Swal.fire({
+      title: 'Uwaga – nieodwracalne!',
+      html: 'Czy na pewno chcesz <b>usunąć wszystkie zgłoszenia</b>?<br>To działanie nie może być cofnięte.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Tak, usuń wszystko',
+      cancelButtonText: 'Anuluj'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await del('/api/submissions/all');
+      Swal.fire({ icon: 'success', title: 'Usunięto', text: 'Wszystkie zgłoszenia usunięte', timer: 1800 });
+      await loadSubmissions();
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się usunąć zgłoszeń' });
+    }
+  };
+
+  await loadSubmissions();
+}
+
+// ──────────────────────────────────────────────────────
+// Zakładka: Wyniki ocen
 // ──────────────────────────────────────────────────────
 async function renderResultsTab() {
   const container = document.getElementById('tabContent');
@@ -81,37 +182,75 @@ async function renderResultsTab() {
   await loadResults();
 }
 
-async function loadResults(search = '') {
-  const container = document.getElementById('resultsList');
+// ──────────────────────────────────────────────────────
+// Zakładka: Zgłoszenia zmian oceny (tickets)
+// ──────────────────────────────────────────────────────
+async function renderTicketsTab() {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = `
+    <div class="column full-width">
+      <div class="column-header">
+        <h3>Zgłoszenia zmian oceny</h3>
+      </div>
+
+      <div class="search-container">
+        <input
+          type="text"
+          id="ticketsSearch"
+          placeholder="Filtruj po numerze zgłoszenia lub osobie..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div class="search-icon">🔍</div>
+      </div>
+
+      <div id="ticketsList" class="submissions-list"></div>
+    </div>
+  `;
+
+  const searchInput = document.getElementById('ticketsSearch');
+  let debounceTimer = null;
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadTickets(searchInput.value.trim());
+    }, 350);
+  });
+
+  await loadTickets();
+}
+
+async function loadTickets(search = '') {
+  const container = document.getElementById('ticketsList');
   if (!container) return;
 
-  container.innerHTML = '<div class="loading">Ładowanie wyników...</div>';
+  container.innerHTML = '<div class="loading">Ładowanie zgłoszeń zmian...</div>';
 
   try {
     const url = search.trim()
-      ? `/api/submissions/grades?search=${encodeURIComponent(search.trim())}`
-      : '/api/submissions/grades';
+      ? `/api/tickets?search=${encodeURIComponent(search.trim())}`
+      : '/api/tickets';
 
-    const data = await get(url);  // lista SubmissionGradedRead
+    const tickets = await get(url);
 
     container.innerHTML = '';
 
-    if (!data || data.length === 0) {
+    if (tickets.length === 0) {
       container.innerHTML = search.trim()
-        ? `<div class="empty">Brak wyników pasujących do "${escapeHtml(search)}"</div>`
-        : '<div class="empty">Brak ocenionych zgłoszeń</div>';
+        ? `<div class="empty">Brak zgłoszeń pasujących do "${escapeHtml(search)}"</div>`
+        : '<div class="empty">Brak zgłoszeń zmian oceny</div>';
       return;
     }
 
     const table = document.createElement('table');
-    table.className = 'submissions-table results-table';
+    table.className = 'submissions-table';
     table.innerHTML = `
       <thead>
         <tr>
-          <th>Miejsce</th>
           <th>Nr zgłoszenia</th>
-          <th>Grupa</th>
-          <th>Oceny (średnia)</th>
+          <th>Osoba zgłaszająca</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -119,166 +258,156 @@ async function loadResults(search = '') {
 
     const tbody = table.querySelector('tbody');
 
-    data.forEach((item, index) => {
-      const sub = item.submission;
-      const grades = item.grades || [];
-      const avg = item.avg?.toFixed(2) || '—';
+    tickets.forEach(ticket => {
+      const statusText = {
+        waiting: 'Oczekuje',
+        approved: 'Zaakceptowane',
+        canceled: 'Anulowane'
+      }[ticket.status] || ticket.status;
 
-      // Sortujemy oceny alfabetycznie po username
-      const sortedGrades = [...grades].sort((a, b) =>
-        a.username.localeCompare(b.username)
-      );
-
-      let gradesDisplay = sortedGrades.length === 0
-        ? '—'
-        : sortedGrades
-            .map(g => `${escapeHtml(g.username.split(' ')[0])}: ${g.grade.toFixed(1)}`)
-            .join(', ');
+      const statusClass = {
+        waiting: 'status-waiting',
+        approved: 'status-approved',
+        canceled: 'status-canceled'
+      }[ticket.status] || '';
 
       const row = document.createElement('tr');
-      row.className = 'submission-row clickable';
+      row.className = `submission-row ${ticket.status === 'waiting' ? 'clickable' : ''}`;
 
       row.innerHTML = `
-        <td class="place">${index + 1}</td>
-        <td>${escapeHtml(sub.submission_number || '-')}</td>
-        <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
-        <td class="${sortedGrades.length > 0 ? 'has-grades' : ''}">
-          <div class="grades-inline">
-            ${gradesDisplay}
-            ${sortedGrades.length > 0 ? `<span class="avg-grade"> (śr: ${avg})</span>` : ''}
-          </div>
-        </td>
+        <td>${escapeHtml(ticket.submission_number || ticket.ticket_id || '-')}</td>
+        <td>${escapeHtml(ticket.requester_name || ticket.requester_email || '—')}</td>
+        <td class="status-cell ${statusClass}">${statusText}</td>
       `;
 
-      row.addEventListener('click', () => {
-        showSubmissionDetailPopup(sub);
-      });
+      if (ticket.status === 'waiting') {
+        row.addEventListener('click', () => showTicketDetailPopup(ticket));
+      }
 
       tbody.appendChild(row);
     });
 
     container.appendChild(table);
   } catch (err) {
-    console.error('Błąd ładowania wyników:', err);
-    container.innerHTML = '<div class="error">Błąd ładowania wyników</div>';
+    console.error('Błąd ładowania zgłoszeń zmian:', err);
+    container.innerHTML = '<div class="error">Błąd ładowania zgłoszeń zmian</div>';
   }
 }
-// Zakładka: Grupy oceniające
+
 // ──────────────────────────────────────────────────────
-async function renderGroupsTab() {
-  const container = document.getElementById('tabContent');
-  container.innerHTML = `
-    <div class="column full-width">
-      <div class="column-header">
-        <h3>Grupy oceniające</h3>
-        <div id="addGroupBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj grupę" /></div>
+// Popup szczegółów zgłoszenia zmiany (ticket)
+// ──────────────────────────────────────────────────────
+async function showTicketDetailPopup(ticket) {
+  popupTitle.innerHTML = `Zgłoszenie zmiany oceny #${ticket.ticket_id || '?'}`;
+
+  let previousGrade = ticket.previous_grade !== undefined ? ticket.previous_grade.toFixed(1) : '—';
+  let proposedGrade = ticket.proposed_grade !== undefined ? ticket.proposed_grade.toFixed(1) : '—';
+  let justification = escapeHtml(ticket.justification || 'Brak uzasadnienia');
+
+  popupContent.innerHTML = `
+    <div class="submission-detail">
+      <div class="detail-field">
+        <div class="field-label">Numer zgłoszenia:</div>
+        <div class="field-value">${escapeHtml(ticket.submission_number || '-')}</div>
       </div>
-      <div id="groupsList" class="groups-list"></div>
+
+      <div class="detail-field">
+        <div class="field-label">Poprzednia ocena:</div>
+        <div class="field-value">${previousGrade}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Proponowana ocena:</div>
+        <div class="field-value">${proposedGrade}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Uzasadnienie zmiany:</div>
+        <div class="field-value long-text">${justification}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Zgłaszający:</div>
+        <div class="field-value">${escapeHtml(ticket.requester_name || ticket.requester_email || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Status:</div>
+        <div class="field-value">${ticket.status === 'waiting' ? 'Oczekuje' : ticket.status === 'approved' ? 'Zaakceptowane' : 'Anulowane'}</div>
+      </div>
+    </div>
+
+    <div class="ticket-actions">
+      ${ticket.status === 'waiting' ? `
+        <button id="cancelTicketBtn" class="btn danger">Anuluj zgłoszenie</button>
+        <button id="approveTicketBtn" class="btn primary">Zaakceptuj zmianę</button>
+      ` : `
+        <div class="info-message">
+          Zgłoszenie zostało już ${ticket.status === 'approved' ? 'zaakceptowane' : 'anulowane'}.
+        </div>
+      `}
     </div>
   `;
 
-  document.getElementById('addGroupBtn').onclick = () => createNewGradingGroup();
+  createBtn.style.display = 'none';
+  openPopup();
 
-  await refreshGroupsList();   // Twoja istniejąca funkcja
+  if (ticket.status === 'waiting') {
+    document.getElementById('cancelTicketBtn').onclick = async () => {
+      const confirm = await Swal.fire({
+        title: 'Anulować zgłoszenie?',
+        text: 'Status zmieni się na canceled.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Tak, anuluj'
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      try {
+        await post(`/api/ticket/${ticket.ticket_id}/cancel`);
+        Swal.fire({ icon: 'success', title: 'Anulowano', timer: 1400 });
+        closePopup();
+        await loadTickets();
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się anulować' });
+      }
+    };
+
+    document.getElementById('approveTicketBtn').onclick = async () => {
+      const confirm = await Swal.fire({
+        title: 'Zaakceptować zmianę?',
+        text: `Ocena zmieni się na ${proposedGrade}. Status → approved.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Tak, zaakceptuj'
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      try {
+        await post(`/api/ticket/${ticket.ticket_id}/approve`);
+        Swal.fire({ icon: 'success', title: 'Zaakceptowano', timer: 1400 });
+        closePopup();
+        await loadTickets();
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się zaakceptować' });
+      }
+    };
+  }
+
+  const closeHandler = () => {
+    createBtn.style.display = '';
+    closePopup();
+    document.getElementById('closeBtn')?.removeEventListener('click', closeHandler);
+  };
+  document.getElementById('closeBtn')?.addEventListener('click', closeHandler);
 }
 
 // ──────────────────────────────────────────────────────
-// Zakładka: Zgłoszenia
-// ──────────────────────────────────────────────────────
-async function renderSubmissionsTab() {
-  const container = document.getElementById('tabContent');
-  container.innerHTML = `
-    <div class="column full-width">
-      <div class="column-header">
-        <h3>Zgłoszenia</h3>
-        <div class="header-actions">
-          <div id="uploadSubmissionsBtn" class="btn"><img src="/static/images/add.svg" alt="Dodaj zgłoszenia" /></div>
-          <button id="assignGroupsBtn" class="btn primary">Przypisz do grup</button>
-          <button id="deleteAllSubmissionsBtn" class="btn danger">Usuń wszystkie zgłoszenia</button>
-        </div>
-      </div>
-
-      <div class="search-container">
-        <input
-          type="text"
-          id="submissionSearch"
-          placeholder="Filtruj po numerze zgłoszenia..."
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <div class="search-icon">🔍</div>
-      </div>
-
-      <div id="submissionsList" class="submissions-list"></div>
-    </div>
-  `;
-
-  // wyszukiwanie (bez zmian)
-  const searchInput = document.getElementById('submissionSearch');
-  let debounceTimer = null;
-
-  searchInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      loadSubmissions(searchInput.value);
-    }, 350);
-  });
-
-  // istniejące akcje
-  document.getElementById('uploadSubmissionsBtn').onclick = showUploadSubmissionsPopup;
-
-  document.getElementById('assignGroupsBtn').onclick = async () => {
-    if (!confirm('Na pewno przypisać wszystkie nieprzypisane zgłoszenia do grup?')) return;
-
-    try {
-      await post('/api/submissions/assign', {});
-      Swal.fire({ icon: 'success', title: 'Sukces', text: 'Zgłoszenia przypisane', timer: 1600 });
-      await loadSubmissions(searchInput.value);
-    } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się przypisać zgłoszeń' });
-    }
-  };
-
-  // NOWY przycisk – usuń wszystkie zgłoszenia
-  document.getElementById('deleteAllSubmissionsBtn').onclick = async () => {
-    const result = await Swal.fire({
-      title: 'Uwaga – nieodwracalne!',
-      html: 'Czy na pewno chcesz <b>usunąć wszystkie zgłoszenia</b>?<br>To działanie nie może być cofnięte.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Tak, usuń wszystko',
-      cancelButtonText: 'Anuluj'
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      await del('/api/submissions/all');   // ← nowy endpoint, który musisz dodać
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Usunięto',
-        text: 'Wszystkie zgłoszenia zostały usunięte',
-        timer: 1800,
-        showConfirmButton: false
-      });
-
-      await loadSubmissions(); // odświeżamy listę
-    } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Błąd',
-        text: 'Nie udało się usunąć zgłoszeń\n' + (err.message || '')
-      });
-    }
-  };
-
-  // pierwsze ładowanie
-  await loadSubmissions();
-}// ──────────────────────────────────────────────────────
-// Ładowanie listy zgłoszeń
+// Ładowanie zwykłych zgłoszeń (submissions)
 // ──────────────────────────────────────────────────────
 async function loadSubmissions(search = '') {
   const container = document.getElementById('submissionsList');
@@ -287,7 +416,6 @@ async function loadSubmissions(search = '') {
   container.innerHTML = '<div class="loading">Ładowanie zgłoszeń...</div>';
 
   try {
-    // budujemy URL z parametrem search, jeśli istnieje
     const url = search.trim()
       ? `/api/submissions?search=${encodeURIComponent(search.trim())}`
       : '/api/submissions';
@@ -342,11 +470,7 @@ async function loadSubmissions(search = '') {
         <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
       `;
 
-      // kliknięcie otwiera szczegółowy podgląd
-      row.addEventListener('click', () => {
-        showSubmissionDetailPopup(sub);
-      });
-
+      row.addEventListener('click', () => showSubmissionDetailPopup(sub));
       tbody.appendChild(row);
     });
 
@@ -356,6 +480,10 @@ async function loadSubmissions(search = '') {
     container.innerHTML = '<div class="error">Błąd ładowania zgłoszeń</div>';
   }
 }
+
+// ──────────────────────────────────────────────────────
+// Popup detali zwykłego zgłoszenia
+// ──────────────────────────────────────────────────────
 function showSubmissionDetailPopup(sub) {
   popupTitle.innerHTML = `Zgłoszenie #${sub.submission_number || sub.id || '?'}`;
 
@@ -398,22 +526,19 @@ function showSubmissionDetailPopup(sub) {
     </div>
   `;
 
-  // chowamy przycisk "Utwórz" – nie jest potrzebny w podglądzie
   createBtn.style.display = 'none';
-
   openPopup();
 
-  // po zamknięciu popupu przywracamy widoczność przycisku (na wszelki wypadek)
   const closeHandler = () => {
     createBtn.style.display = '';
     closePopup();
-    document.getElementById('closeBtn').removeEventListener('click', closeHandler);
+    document.getElementById('closeBtn')?.removeEventListener('click', closeHandler);
   };
-  document.getElementById('closeBtn').addEventListener('click', closeHandler);
+  document.getElementById('closeBtn')?.addEventListener('click', closeHandler);
 }
 
 // ──────────────────────────────────────────────────────
-// Popup do uploadu pliku CSV
+// Popup do uploadu zgłoszeń CSV
 // ──────────────────────────────────────────────────────
 function showUploadSubmissionsPopup() {
   popupTitle.innerHTML = 'Dodaj nowe zgłoszenia (CSV)';
@@ -428,7 +553,6 @@ function showUploadSubmissionsPopup() {
     </div>
   `;
 
-  // zmieniamy przycisk w stopce popupu
   createBtn.innerHTML = '<img src="/static/images/upload.svg" alt="Wgraj" /> Wgraj plik';
   createBtn.onclick = async () => {
     const fileInput = document.getElementById('submissionsFileInput');
@@ -443,10 +567,10 @@ function showUploadSubmissionsPopup() {
       const formData = new FormData();
       formData.append('submissions_file', file);
 
-      await post('/api/submissions', formData, { isFormData: true });  // ← ważne: bez JSON headers
+      await post('/api/submissions', formData, { isFormData: true });
 
       closePopup();
-      await loadSubmissions();   // odświeżamy listę zgłoszeń
+      await loadSubmissions();
 
       Swal.fire({
         icon: 'success',
@@ -467,8 +591,9 @@ function showUploadSubmissionsPopup() {
   openPopup();
 }
 
-
-
+// ──────────────────────────────────────────────────────
+// Funkcje grup i graderów (bez zmian)
+// ──────────────────────────────────────────────────────
 async function refreshGroupsList() {
   const groupsList = document.getElementById('groupsList');
   if (!groupsList) return;
@@ -505,9 +630,7 @@ async function refreshGroupsList() {
 
       groupsList.appendChild(groupDiv);
 
-      groupDiv.querySelector('.add-grader-btn').onclick = () => {
-        createGraderInGroup(group.group_id);
-      };
+      groupDiv.querySelector('.add-grader-btn').onclick = () => createGraderInGroup(group.group_id);
 
       groupDiv.querySelector('.delete-group').onclick = async (e) => {
         e.stopPropagation();
@@ -584,14 +707,8 @@ async function loadGradersForGroup(groupId, graderIds) {
           if (!confirm('Odpiąć użytkownika od tego Gradera?')) return;
 
           try {
-            // Jeśli masz endpoint do odpinania użytkownika:
-            // await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}/user`);
-
-            // Jeśli nie masz – usuwasz całego gracera (tymczasowe rozwiązanie):
             await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
-
             refreshGroupsList();
-
             Swal.fire({
               icon: 'success',
               title: 'Udało się',
@@ -608,9 +725,7 @@ async function loadGradersForGroup(groupId, graderIds) {
           }
         };
       } else {
-        div.querySelector('.assign-user').onclick = () => {
-          showAssignUserPopup(grader.grader_id, groupId);
-        };
+        div.querySelector('.assign-user').onclick = () => showAssignUserPopup(grader.grader_id, groupId);
 
         div.querySelector('.delete-grader').onclick = async () => {
           if (!confirm('Na pewno usunąć tego pustego Gradera?')) return;
@@ -618,7 +733,6 @@ async function loadGradersForGroup(groupId, graderIds) {
           try {
             await del(`/api/graders_group/${groupId}/graders/${grader.grader_id}`);
             refreshGroupsList();
-
             Swal.fire({
               icon: 'success',
               title: 'Usunięto',
@@ -641,8 +755,6 @@ async function loadGradersForGroup(groupId, graderIds) {
   }
 }
 
-// ------------------ Akcje ----------------------
-
 async function createNewGradingGroup() {
   try {
     await post('/api/graders_group', {});
@@ -660,8 +772,6 @@ async function createGraderInGroup(groupId) {
     alert('Nie udało się dodać gracera: ' + (err.message || ''));
   }
 }
-
-// ------------------ Popup przypisania użytkownika ----------------------
 
 async function showAssignUserPopup(graderId, groupId) {
   popupTitle.innerHTML = `Przypisz użytkownika do Gradera #${graderId}`;

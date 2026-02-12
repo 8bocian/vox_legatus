@@ -16,7 +16,25 @@
         <img src="/static/images/logout.svg" alt="wyloguj" />
       </div>
     </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="grading">Ocena zgłoszeń</button>
+      <button class="tab-btn" data-tab="my-grades">Moje oceny</button>
+    </div>
+    <div id="myGradesTab" class="tab-content hidden">
+      <h2>Moje oceny</h2>
+      <div class="search-container">
+        <input
+          type="text"
+          id="myGradesSearch"
+          placeholder="Filtruj po numerze zgłoszenia..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div class="search-icon">🔍</div>
+      </div>
 
+      <div id="myGradesList" class="submissions-list"></div>
+    </div>
     <div id="currentSubmission" class="submission hidden">
 
       <div class="submission-content">

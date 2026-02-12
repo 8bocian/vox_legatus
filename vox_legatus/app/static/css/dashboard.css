@@ -831,3 +831,21 @@ input:checked + .slider:before {
     margin-top: 6px;
   }
 }
+
+.ticket-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.btn.danger {
+  background: #d32f2f;
+  color: white;
+}
+
+.btn.danger:hover {
+  background: #b71c1c;
+}
