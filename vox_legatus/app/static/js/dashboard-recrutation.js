@@ -355,7 +355,6 @@ async function loadTickets(search = '') {
 
       const row = document.createElement('tr');
       row.className = ticket.status === 'waiting' ? 'submission-row clickable' : 'submission-row';
-      row.dataset.ticketId = ticket.ticket_id; // zapisujemy ID ticketu w data-
 
       row.innerHTML = `
         <td>${escapeHtml(ticket.submission_number || '-')}</td>
@@ -363,9 +362,17 @@ async function loadTickets(search = '') {
         <td class="${statusClass}">${statusText}</td>
       `;
 
+      // TESTOWY listener – zawsze działa, nawet na nie-waiting
+      row.addEventListener('click', (e) => {
+        console.log('Kliknięto wiersz ticketu ID:', ticket.ticket_id);
+        alert('Kliknięto ticket ' + ticket.ticket_id + ' (testowy alert)');
+        if (ticket.status === 'waiting') {
+          showTicketDetailPopup(ticket);
+        }
+      });
+
       tbody.appendChild(row);
     });
-
     // POZA pętlą – jeden listener na całą tabelę (delegacja zdarzeń)
     tbody.addEventListener('click', (e) => {
       const row = e.target.closest('tr');
