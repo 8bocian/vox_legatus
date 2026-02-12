@@ -69,7 +69,7 @@ async def approve(
 
 @router.post("")
 async def create(
-        admin: Annotated[User, Depends(require_role(Role.ADMIN))],
+        admin: Annotated[User, Depends(require_role(Role.GRADER))],
         session: Annotated[AsyncSession, Depends(get_db)],
         ticket_repo: Annotated[TicketRepo, Depends()],
         ticket_create: Annotated[TicketCreate, Body()]
