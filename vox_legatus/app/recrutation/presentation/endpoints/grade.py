@@ -24,7 +24,7 @@ router = APIRouter()
 
 @router.get("/my_grades")
 async def get_my(
-        user: Annotated[User, Depends(require_role(Role.ADMIN))],
+        user: Annotated[User, Depends(require_role(Role.GRADER))],
         session: Annotated[AsyncSession, Depends(get_db)],
         submission_repo: Annotated[SubmissionRepo, Depends()],
         grade_repo: Annotated[GradeRepo, Depends()],
