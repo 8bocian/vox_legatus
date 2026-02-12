@@ -9,6 +9,7 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
+// Elementy DOM – zakładka oceniania
 const currentSubmission = document.getElementById('currentSubmission');
 const noSubmission = document.getElementById('noSubmission');
 const loading = document.getElementById('loading');
@@ -23,7 +24,7 @@ let selectedGrade = null;
 // Tabs handling
 const tabs = document.querySelectorAll('.tab-btn');
 const tabContents = {
-  grading: document.getElementById('currentSubmission').parentElement, // zakładka oceniania
+  grading: document.getElementById('gradingTab'),
   'my-grades': document.getElementById('myGradesTab')
 };
 
@@ -42,7 +43,7 @@ tabs.forEach(tab => {
 });
 
 // ──────────────────────────────────────────────────────
-// Generowanie przycisków ocen (0.0 – 6.0 co 0.5)
+// Generowanie przycisków ocen (używane w obu miejscach)
 // ──────────────────────────────────────────────────────
 function createGradeButtons(containerId = 'gradeButtons') {
   const container = document.getElementById(containerId);
@@ -60,7 +61,9 @@ function createGradeButtons(containerId = 'gradeButtons') {
       container.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selectedGrade = parseFloat(val);
+      // odblokuj przycisk submit jeśli jest w popupie
       document.getElementById('submitChangeBtn')?.removeAttribute('disabled');
+      document.getElementById('saveGradeBtn')?.removeAttribute('disabled');
     };
 
     container.appendChild(btn);
@@ -68,7 +71,7 @@ function createGradeButtons(containerId = 'gradeButtons') {
 }
 
 // ──────────────────────────────────────────────────────
-// Ładowanie losowego zgłoszenia do oceny
+// Ładowanie losowego zgłoszenia do oceny (zakładka główna)
 // ──────────────────────────────────────────────────────
 async function loadRandomSubmission() {
   currentSubmission.classList.add('hidden');
@@ -105,7 +108,7 @@ async function loadRandomSubmission() {
 }
 
 // ──────────────────────────────────────────────────────
-// Zapisywanie oceny (normalna ocena zgłoszenia)
+// Zapisywanie normalnej oceny (zakładka Ocena zgłoszeń)
 // ──────────────────────────────────────────────────────
 async function saveGrade() {
   if (!currentSubmissionId || selectedGrade === null) return;
@@ -208,20 +211,20 @@ async function loadMyGrades(search = '') {
         </td>
       `;
 
-      // kliknięcie w wiersz (poza przyciskiem) → pokazuje szczegóły zgłoszenia
-      row.addEventListener('click', (e) => {
+      // kliknięcie w wiersz (poza przyciskiem akcji) → pokazuje pełne zgłoszenie
+      row.addEventListener('click', async (e) => {
         if (e.target.classList.contains('change-grade-btn')) return;
-        // możesz dodać tu showSubmissionDetailPopup jeśli chcesz
-        Swal.fire({
-          title: 'Szczegóły zgłoszenia',
-          html: `
-            <strong>Nr:</strong> ${escapeHtml(item.submission_number || '-')}<br>
-            <strong>Temat 1:</strong> ${escapeHtml(item.subject_1 || '—')}<br>
-            <strong>Temat 2:</strong> ${escapeHtml(item.subject_2 || '—')}<br>
-            <strong>Twoja ocena:</strong> ${item.grade.toFixed(1)}
-          `,
-          icon: 'info'
-        });
+
+        try {
+          const fullSub = await get(`/api/submissions/${item.submission_id}`);
+          showSubmissionDetailPopup(fullSub);
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Błąd',
+            text: 'Nie udało się pobrać szczegółów zgłoszenia'
+          });
+        }
       });
 
       // przycisk Zgłoś zmianę oceny
@@ -281,9 +284,12 @@ function showChangeGradePopup(item) {
   const submitBtn = document.getElementById('submitChangeBtn');
   const explanationInput = document.getElementById('explanation');
 
-  explanationInput.oninput = () => {
+  // odblokuj przycisk dopiero gdy wybrano ocenę i wpisano tekst
+  const checkSubmit = () => {
     submitBtn.disabled = !selectedNewGrade || !explanationInput.value.trim();
   };
+
+  explanationInput.oninput = checkSubmit;
 
   // anuluj
   document.getElementById('cancelChangeBtn').onclick = () => closePopup();
@@ -327,6 +333,68 @@ function showChangeGradePopup(item) {
       });
     }
   };
+}
+
+// ──────────────────────────────────────────────────────
+// Popup szczegółów zgłoszenia (używany w Moich ocenach)
+// ──────────────────────────────────────────────────────
+async function showSubmissionDetailPopup(sub) {
+  let fullSub = sub;
+
+  // jeśli sub jest niekompletny – pobieramy pełne dane
+  if (!sub.about_me || !sub.subject_1_answer) {
+    try {
+      fullSub = await get(`/api/submissions/${sub.id}`);
+    } catch (err) {
+      console.error('Błąd pobierania szczegółów:', err);
+    }
+  }
+
+  popupTitle.innerHTML = `Zgłoszenie #${escapeHtml(fullSub.submission_number || fullSub.id || '?')}`;
+
+  popupContent.innerHTML = `
+    <div class="submission-detail">
+      <div class="detail-field">
+        <div class="field-label">Numer zgłoszenia:</div>
+        <div class="field-value">${escapeHtml(fullSub.submission_number || '-')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">O mnie:</div>
+        <div class="field-value long-text">${escapeHtml(fullSub.about_me || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Temat 1:</div>
+        <div class="field-value">${escapeHtml(fullSub.subject_1 || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Odpowiedź na temat 1:</div>
+        <div class="field-value long-text">${escapeHtml(fullSub.subject_1_answer || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Temat 2:</div>
+        <div class="field-value">${escapeHtml(fullSub.subject_2 || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Odpowiedź na temat 2:</div>
+        <div class="field-value long-text">${escapeHtml(fullSub.subject_2_answer || '—')}</div>
+      </div>
+    </div>
+  `;
+
+  createBtn.style.display = 'none';
+  openPopup();
+
+  const closeHandler = () => {
+    createBtn.style.display = '';
+    closePopup();
+    document.getElementById('closeBtn')?.removeEventListener('click', closeHandler);
+  };
+  document.getElementById('closeBtn')?.addEventListener('click', closeHandler);
 }
 
 // ──────────────────────────────────────────────────────
