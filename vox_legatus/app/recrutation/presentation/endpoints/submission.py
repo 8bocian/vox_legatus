@@ -165,22 +165,25 @@ async def get_submission(
         submission_repo: Annotated[SubmissionRepo, Depends()],
         grader_repo: Annotated[GraderRepo, Depends()]
 ) -> Optional[SubmissionRead]:
-    graders = await grader_repo.get_by_user_id(session, user.id)
-    grader = graders[0]
     submission = await submission_repo.get(session, submission_id)
-    if submission.group_id == grader.group_id:
-        return SubmissionRead(
-            id=submission.id,
-            group_id=submission.group_id,
-            submission_number=submission.submission_number,
-            about_me=submission.about_me,
-            subject_1=submission.subject_1,
-            subject_2=submission.subject_2,
-            subject_1_answer=submission.subject_1_answer,
-            subject_2_answer=submission.subject_2_answer,
-        )
-    else:
-        return None
+
+    if user.role != Role.ADMIN:
+        graders = await grader_repo.get_by_user_id(session, user.id)
+        grader = graders[0]
+
+        if submission.group_id != grader.group_id:
+            return None
+
+    return SubmissionRead(
+        id=submission.id,
+        group_id=submission.group_id,
+        submission_number=submission.submission_number,
+        about_me=submission.about_me,
+        subject_1=submission.subject_1,
+        subject_2=submission.subject_2,
+        subject_1_answer=submission.subject_1_answer,
+        subject_2_answer=submission.subject_2_answer,
+    )
 
 
 
