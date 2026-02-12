@@ -22,7 +22,7 @@ from app.recrutation.infrastructure.repositories.grader_repository import Grader
 
 router = APIRouter()
 
-@router.get("")
+@router.get("/my_grades")
 async def get_my(
         user: Annotated[User, Depends(require_role(Role.ADMIN))],
         session: Annotated[AsyncSession, Depends(get_db)],
