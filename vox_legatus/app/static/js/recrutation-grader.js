@@ -104,6 +104,7 @@ function createGradeButtons(containerId = 'gradeButtons') {
 // Ładowanie losowego zgłoszenia do oceny
 // ──────────────────────────────────────────────────────
 async function loadRandomSubmission() {
+  // zawsze chowamy oba na początek
   currentSubmission.classList.add('hidden');
   noSubmission.classList.add('hidden');
   loading.classList.remove('hidden');
@@ -116,10 +117,13 @@ async function loadRandomSubmission() {
     const data = await get('/api/submissions/random');
 
     if (!data || !data.id) {
+      // brak zgłoszenia → pokazujemy komunikat
       noSubmission.classList.remove('hidden');
+      loading.classList.add('hidden');
       return;
     }
 
+    // jest zgłoszenie → wypełniamy dane
     currentSubmissionId = data.id;
 
     document.getElementById('aboutMe').textContent = data.about_me || '—';
@@ -130,13 +134,12 @@ async function loadRandomSubmission() {
 
     currentSubmission.classList.remove('hidden');
   } catch (err) {
-    console.error(err);
+    console.error('Błąd podczas pobierania zgłoszenia:', err);
     noSubmission.classList.remove('hidden');
   } finally {
     loading.classList.add('hidden');
   }
 }
-
 // ──────────────────────────────────────────────────────
 // Zapisywanie oceny
 // ──────────────────────────────────────────────────────

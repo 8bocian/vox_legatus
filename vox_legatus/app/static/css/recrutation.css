@@ -376,3 +376,14 @@ body {
     width: 100%;
   }
 }
+
+#currentSubmission.hidden,
+#noSubmission.hidden,
+#loading.hidden {
+  display: none !important;
+}
+
+#gradingTab {
+  position: relative;
+  min-height: 500px; /* zapobiega skakaniu wysokości */
+}
