@@ -5,7 +5,7 @@
   <title>Rekrutacja – Ocena zgłoszeń</title>
   <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link rel="stylesheet" href="/static/css/recrutation.css?v={{ timestamp }}" />
+  <link rel="stylesheet" href="/static/css/recrutation-grader.css?v={{ timestamp }}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
@@ -16,10 +16,54 @@
         <img src="/static/images/logout.svg" alt="wyloguj" />
       </div>
     </div>
+
+    <!-- Przełączniki zakładek -->
     <div class="tabs">
       <button class="tab-btn active" data-tab="grading">Ocena zgłoszeń</button>
       <button class="tab-btn" data-tab="my-grades">Moje oceny</button>
     </div>
+
+    <!-- Zakładka: Ocena zgłoszeń (aktywna domyślnie) -->
+    <div id="gradingTab" class="tab-content">
+      <div id="currentSubmission" class="submission hidden">
+        <div class="submission-content">
+          <div class="section">
+            <h3>O mnie</h3>
+            <div id="aboutMe" class="content-box"></div>
+          </div>
+
+          <div class="section">
+            <h3>Temat 1</h3>
+            <div id="subject1" class="topic"></div>
+            <div id="answer1" class="content-box"></div>
+          </div>
+
+          <div class="section">
+            <h3>Temat 2</h3>
+            <div id="subject2" class="topic"></div>
+            <div id="answer2" class="content-box"></div>
+          </div>
+        </div>
+
+        <div class="grading-area">
+          <h3>Twoja ocena</h3>
+          <div id="gradeButtons" class="grade-buttons"></div>
+
+          <div class="action-buttons">
+            <button id="saveGradeBtn" class="btn primary" disabled>Zapisz ocenę</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="noSubmission" class="empty-message">
+        <p>Aktualnie nie ma zgłoszeń do oceny.</p>
+        <button id="getNextBtn" class="btn primary">Pobierz zgłoszenie</button>
+      </div>
+
+      <div id="loading" class="loading hidden">Pobieranie zgłoszenia...</div>
+    </div>
+
+    <!-- Zakładka: Moje oceny -->
     <div id="myGradesTab" class="tab-content hidden">
       <h2>Moje oceny</h2>
       <div class="search-container">
@@ -35,52 +79,15 @@
 
       <div id="myGradesList" class="submissions-list"></div>
     </div>
-    <div id="currentSubmission" class="submission hidden">
 
-      <div class="submission-content">
-        <div class="section">
-          <h3>O mnie</h3>
-          <div id="aboutMe" class="content-box"></div>
-        </div>
-
-        <div class="section">
-          <h3>Temat 1</h3>
-          <div id="subject1" class="topic"></div>
-          <div id="answer1" class="content-box"></div>
-        </div>
-
-        <div class="section">
-          <h3>Temat 2</h3>
-          <div id="subject2" class="topic"></div>
-          <div id="answer2" class="content-box"></div>
-        </div>
-      </div>
-
-      <div class="grading-area">
-        <h3>Twoja ocena</h3>
-        <div id="gradeButtons" class="grade-buttons"></div>
-
-        <div class="action-buttons">
-          <button id="saveGradeBtn" class="btn primary" disabled>Zapisz ocenę</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="noSubmission" class="empty-message">
-      <p>Aktualnie nie ma zgłoszeń do oceny.</p>
-      <button id="getNextBtn" class="btn primary">Pobierz zgłoszenie</button>
-    </div>
-
-    <div id="loading" class="loading hidden">Pobieranie zgłoszenia...</div>
-
-    <!-- Modal potwierdzenia (opcjonalny) -->
-    <div id="confirmModal" class="modal hidden">
+    <!-- Popup (używany zarówno do szczegółów, jak i zgłoszenia zmiany) -->
+    <div class="modal hidden" id="popupModal">
       <div class="modal-content">
-        <h3>Potwierdzenie</h3>
-        <p>Czy na pewno chcesz zapisać ocenę <strong id="confirmGrade"></strong>?</p>
+        <h2 id="popupTitle"></h2>
+        <div id="popupContent"></div>
         <div class="modal-actions">
-          <button id="confirmYes" class="btn primary">Tak, zapisz</button>
-          <button id="confirmNo" class="btn secondary">Anuluj</button>
+          <button id="closeBtn" class="btn secondary">Zamknij</button>
+          <button id="createBtn" class="btn primary" style="display:none;">Utwórz</button>
         </div>
       </div>
     </div>
