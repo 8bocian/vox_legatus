@@ -10,6 +10,88 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
+async function loadResults(search = '') {
+  const container = document.getElementById('resultsList');
+  if (!container) return;
+
+  container.innerHTML = '<div class="loading">Ładowanie wyników...</div>';
+
+  try {
+    const url = search.trim()
+      ? `/api/submissions/grades?search=${encodeURIComponent(search.trim())}`
+      : '/api/submissions/grades';
+
+    const data = await get(url);
+
+    container.innerHTML = '';
+
+    if (!data || data.length === 0) {
+      container.innerHTML = search.trim()
+        ? `<div class="empty">Brak wyników pasujących do "${escapeHtml(search)}"</div>`
+        : '<div class="empty">Brak ocenionych zgłoszeń</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'submissions-table results-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Miejsce</th>
+          <th>Nr zgłoszenia</th>
+          <th>Grupa</th>
+          <th>Oceny (średnia)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    data.forEach((item, index) => {
+      const sub = item.submission;
+      const grades = item.grades || [];
+      const avg = item.avg?.toFixed(2) || '—';
+
+      const sortedGrades = [...grades].sort((a, b) =>
+        a.username.localeCompare(b.username)
+      );
+
+      let gradesDisplay = sortedGrades.length === 0
+        ? '—'
+        : sortedGrades
+            .map(g => `${escapeHtml(g.username.split(' ')[0])}: ${g.grade.toFixed(1)}`)
+            .join(', ');
+
+      const row = document.createElement('tr');
+      row.className = 'submission-row clickable';
+
+      row.innerHTML = `
+        <td class="place">${index + 1}</td>
+        <td>${escapeHtml(sub.submission_number || '-')}</td>
+        <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
+        <td class="${sortedGrades.length > 0 ? 'has-grades' : ''}">
+          <div class="grades-inline">
+            ${gradesDisplay}
+            ${sortedGrades.length > 0 ? `<span class="avg-grade"> (śr: ${avg})</span>` : ''}
+          </div>
+        </td>
+      `;
+
+      row.addEventListener('click', () => {
+        showSubmissionDetailPopup(sub);
+      });
+
+      tbody.appendChild(row);
+    });
+
+    container.appendChild(table);
+  } catch (err) {
+    console.error('Błąd ładowania wyników:', err);
+    container.innerHTML = '<div class="error">Błąd ładowania wyników</div>';
+  }
+}
+
 // ──────────────────────────────────────────────────────
 // Główna funkcja ładowania zakładki Rekrutacja
 // ──────────────────────────────────────────────────────
