@@ -279,7 +279,7 @@ async function renderTicketsTab() {
         <input
           type="text"
           id="ticketsSearch"
-          placeholder="Filtruj po numerze zgłoszenia lub osobie..."
+          placeholder="Filtruj po numerze zgłoszenia lub zgłaszającym..."
           autocomplete="off"
           spellcheck="false"
         />
@@ -301,6 +301,196 @@ async function renderTicketsTab() {
   });
 
   await loadTickets();
+}
+
+async function loadTickets(search = '') {
+  const container = document.getElementById('ticketsList');
+  if (!container) return;
+
+  container.innerHTML = '<div class="loading">Ładowanie zgłoszeń zmian...</div>';
+
+  try {
+    const url = search.trim()
+      ? `/api/tickets?search=${encodeURIComponent(search.trim())}`
+      : '/api/tickets';
+
+    const tickets = await get(url);
+
+    container.innerHTML = '';
+
+    if (!tickets || tickets.length === 0) {
+      container.innerHTML = search.trim()
+        ? `<div class="empty">Brak zgłoszeń pasujących do "${escapeHtml(search)}"</div>`
+        : '<div class="empty">Brak zgłoszeń zmian oceny</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'submissions-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Nr zgłoszenia</th>
+          <th>Osoba zgłaszająca</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    tickets.forEach(ticket => {
+      const statusText = {
+        waiting: 'Oczekuje',
+        approved: 'Zaakceptowane',
+        canceled: 'Anulowane'
+      }[ticket.status] || ticket.status;
+
+      const statusClass = {
+        waiting: 'status-waiting',
+        approved: 'status-approved',
+        canceled: 'status-canceled'
+      }[ticket.status] || '';
+
+      const row = document.createElement('tr');
+      row.className = ticket.status === 'waiting' ? 'submission-row clickable' : 'submission-row';
+
+      row.innerHTML = `
+        <td>${escapeHtml(ticket.submission_number || '-')}</td>
+        <td>${escapeHtml(ticket.requester_name || ticket.requester_email || '—')}</td>
+        <td class="${statusClass}">${statusText}</td>
+      `;
+
+      if (ticket.status === 'waiting') {
+        row.addEventListener('click', () => showTicketDetailPopup(ticket));
+      }
+
+      tbody.appendChild(row);
+    });
+
+    container.appendChild(table);
+  } catch (err) {
+    console.error('Błąd ładowania zgłoszeń zmian:', err);
+    container.innerHTML = '<div class="error">Błąd ładowania zgłoszeń zmian</div>';
+  }
+}
+
+async function showTicketDetailPopup(ticket) {
+  popupTitle.innerHTML = `Zgłoszenie zmiany #${ticket.ticket_id || '?'}`;
+
+  // Pobieramy pełne szczegóły zgłoszenia
+  let sub = {};
+  try {
+    sub = await get(`/api/submissions/${ticket.submission_id}`);
+  } catch (err) {
+    console.warn('Nie udało się pobrać detali zgłoszenia', err);
+  }
+
+  const previous = ticket.previous_grade !== undefined ? ticket.previous_grade.toFixed(1) : '—';
+  const proposed = ticket.proposed_grade !== undefined ? ticket.proposed_grade.toFixed(1) : '—';
+  const justification = escapeHtml(ticket.explanation || ticket.justification || 'Brak uzasadnienia');
+
+  popupContent.innerHTML = `
+    <div class="submission-detail">
+      <h3>Szczegóły zgłoszenia</h3>
+      <div class="detail-field">
+        <div class="field-label">Numer zgłoszenia:</div>
+        <div class="field-value">${escapeHtml(ticket.submission_number || sub.submission_number || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">O mnie:</div>
+        <div class="field-value long-text">${escapeHtml(sub.about_me || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Temat 1:</div>
+        <div class="field-value">${escapeHtml(sub.subject_1 || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Odpowiedź:</div>
+        <div class="field-value long-text">${escapeHtml(sub.subject_1_answer || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Temat 2:</div>
+        <div class="field-value">${escapeHtml(sub.subject_2 || '—')}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Odpowiedź:</div>
+        <div class="field-value long-text">${escapeHtml(sub.subject_2_answer || '—')}</div>
+      </div>
+
+      <hr style="margin: 20px 0; border-color: #eee;">
+
+      <h3>Zgłoszenie zmiany oceny</h3>
+      <div class="detail-field">
+        <div class="field-label">Poprzednia ocena:</div>
+        <div class="field-value">${previous}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Proponowana ocena:</div>
+        <div class="field-value">${proposed}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Uzasadnienie:</div>
+        <div class="field-value long-text">${justification}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Zgłaszający:</div>
+        <div class="field-value">${escapeHtml(ticket.requester_name || '—')}</div>
+      </div>
+    </div>
+
+    <div class="ticket-actions">
+      ${ticket.status === 'waiting' ? `
+        <button id="cancelTicketBtn" class="btn danger">Anuluj zgłoszenie</button>
+        <button id="approveTicketBtn" class="btn primary">Zaakceptuj zmianę</button>
+      ` : `
+        <div class="info-message">
+          Zgłoszenie zostało już ${ticket.status === 'approved' ? 'zaakceptowane' : 'anulowane'}.
+        </div>
+      `}
+      <button id="closeTicketBtn" class="btn secondary">Zamknij</button>
+    </div>
+  `;
+
+  openPopup();  // ← jeśli używasz swojej funkcji openPopup
+
+  // Akcje tylko dla waiting
+  if (ticket.status === 'waiting') {
+    document.getElementById('cancelTicketBtn').onclick = async () => {
+      if (!confirm('Na pewno anulować zgłoszenie zmiany?')) return;
+      try {
+        await post(`/api/tickets/${ticket.ticket_id}/cancel`);
+        Swal.fire({ icon: 'success', title: 'Anulowano', timer: 1400 });
+        closePopup();
+        await loadTickets();
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się anulować' });
+      }
+    };
+
+    document.getElementById('approveTicketBtn').onclick = async () => {
+      if (!confirm('Na pewno zaakceptować zmianę oceny?')) return;
+      try {
+        await post(`/api/tickets/${ticket.ticket_id}/approve`);
+        Swal.fire({ icon: 'success', title: 'Zaakceptowano', timer: 1400 });
+        closePopup();
+        await loadTickets();
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się zaakceptować' });
+      }
+    };
+  }
+
+  document.getElementById('closeTicketBtn').onclick = closePopup;
 }
 
 async function loadTickets(search = '') {
