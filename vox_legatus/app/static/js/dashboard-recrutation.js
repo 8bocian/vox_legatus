@@ -355,6 +355,7 @@ async function loadTickets(search = '') {
 
       const row = document.createElement('tr');
       row.className = ticket.status === 'waiting' ? 'submission-row clickable' : 'submission-row';
+      row.dataset.ticketId = ticket.ticket_id; // zapisujemy ID ticketu w data-
 
       row.innerHTML = `
         <td>${escapeHtml(ticket.submission_number || '-')}</td>
@@ -362,13 +363,22 @@ async function loadTickets(search = '') {
         <td class="${statusClass}">${statusText}</td>
       `;
 
-      if (ticket.status === 'waiting') {
-        row.addEventListener('click', () => showTicketDetailPopup(ticket));
-      }
-
       tbody.appendChild(row);
     });
 
+    // POZA pętlą – jeden listener na całą tabelę (delegacja zdarzeń)
+    tbody.addEventListener('click', (e) => {
+      const row = e.target.closest('tr');
+      if (!row || !row.classList.contains('clickable')) return;
+
+      const ticketId = row.dataset.ticketId;
+      const ticket = tickets.find(t => t.ticket_id == ticketId);
+
+      if (ticket) {
+        console.log('Kliknięto ticket ID:', ticket.ticket_id); // test – sprawdź konsolę
+        showTicketDetailPopup(ticket);
+      }
+    });
     container.appendChild(table);
   } catch (err) {
     console.error('Błąd ładowania zgłoszeń zmian:', err);

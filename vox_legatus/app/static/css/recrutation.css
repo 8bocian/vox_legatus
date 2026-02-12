@@ -387,3 +387,16 @@ body {
   position: relative;
   min-height: 500px; /* zapobiega skakaniu wysokości */
 }
+
+.submission-row.clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.submission-row.clickable:hover {
+  background: #f0f7ff;
+}
+
+.submission-row.clickable td {
+  pointer-events: auto; /* ważne – komórki muszą przekazywać kliknięcie do wiersza */
+}
