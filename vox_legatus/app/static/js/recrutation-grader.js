@@ -1,5 +1,4 @@
 import { get, post, logout } from './api.js';
-import { openPopup, closePopup } from './dashboard-popup.js';
 
 function escapeHtml(unsafe) {
   return unsafe
@@ -10,7 +9,29 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
-// Elementy DOM – zakładka oceniania
+// ──────────────────────────────────────────────────────
+// Własna obsługa popupu (nie korzystamy z dashboard-popup.js)
+// ──────────────────────────────────────────────────────
+function openCustomPopup() {
+  const modal = document.getElementById('customPopupModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+}
+
+function closeCustomPopup() {
+  const modal = document.getElementById('customPopupModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    // czyścimy zawartość po zamknięciu
+    document.getElementById('popupTitle').innerHTML = '';
+    document.getElementById('popupContent').innerHTML = '';
+  }
+}
+
+// Elementy DOM
 const currentSubmission = document.getElementById('currentSubmission');
 const noSubmission = document.getElementById('noSubmission');
 const loading = document.getElementById('loading');
@@ -44,7 +65,7 @@ tabs.forEach(tab => {
 });
 
 // ──────────────────────────────────────────────────────
-// Generowanie przycisków ocen (używane w obu miejscach)
+// Generowanie przycisków ocen
 // ──────────────────────────────────────────────────────
 function createGradeButtons(containerId = 'gradeButtons') {
   const container = document.getElementById(containerId);
@@ -62,9 +83,8 @@ function createGradeButtons(containerId = 'gradeButtons') {
       container.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selectedGrade = parseFloat(val);
-      // odblokuj przycisk submit jeśli jest w popupie
-      document.getElementById('submitChangeBtn')?.removeAttribute('disabled');
       document.getElementById('saveGradeBtn')?.removeAttribute('disabled');
+      document.getElementById('submitChangeBtn')?.removeAttribute('disabled');
     };
 
     container.appendChild(btn);
@@ -72,7 +92,7 @@ function createGradeButtons(containerId = 'gradeButtons') {
 }
 
 // ──────────────────────────────────────────────────────
-// Ładowanie losowego zgłoszenia do oceny (zakładka główna)
+// Ładowanie losowego zgłoszenia do oceny
 // ──────────────────────────────────────────────────────
 async function loadRandomSubmission() {
   currentSubmission.classList.add('hidden');
@@ -109,7 +129,7 @@ async function loadRandomSubmission() {
 }
 
 // ──────────────────────────────────────────────────────
-// Zapisywanie normalnej oceny (zakładka Ocena zgłoszeń)
+// Zapisywanie oceny
 // ──────────────────────────────────────────────────────
 async function saveGrade() {
   if (!currentSubmissionId || selectedGrade === null) return;
@@ -212,7 +232,7 @@ async function loadMyGrades(search = '') {
         </td>
       `;
 
-      // kliknięcie w wiersz (poza przyciskiem akcji) → pokazuje pełne zgłoszenie
+      // kliknięcie w wiersz (poza przyciskiem) → pokazuje szczegóły zgłoszenia
       row.addEventListener('click', async (e) => {
         if (e.target.classList.contains('change-grade-btn')) return;
 
@@ -245,104 +265,11 @@ async function loadMyGrades(search = '') {
 }
 
 // ──────────────────────────────────────────────────────
-// Popup zgłoszenia zmiany oceny
-// ──────────────────────────────────────────────────────
-function showChangeGradePopup(item) {
-  popupTitle.innerHTML = `Zgłoś zmianę oceny dla zgłoszenia #${item.submission_number || item.submission_id}`;
-
-  popupContent.innerHTML = `
-    <div class="submission-detail">
-      <div class="detail-field">
-        <div class="field-label">Poprzednia ocena:</div>
-        <div class="field-value">${item.grade.toFixed(1)}</div>
-      </div>
-
-      <div class="detail-field">
-        <div class="field-label">Nowa ocena:</div>
-        <div id="newGradeButtons" class="grade-buttons"></div>
-      </div>
-
-      <div class="detail-field">
-        <div class="field-label">Uzasadnienie zmiany (wymagane):</div>
-        <textarea id="explanation" rows="5" placeholder="Wpisz powód zmiany oceny..." style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd;"></textarea>
-      </div>
-    </div>
-
-    <div class="ticket-actions">
-      <button id="cancelChangeBtn" class="btn secondary">Anuluj</button>
-      <button id="submitChangeBtn" class="btn primary" disabled>Wyślij zgłoszenie</button>
-    </div>
-  `;
-
-  createBtn.style.display = 'none';
-  openPopup();
-
-  let selectedNewGrade = null;
-
-  // przyciski nowej oceny
-  createGradeButtons('newGradeButtons');
-
-  const submitBtn = document.getElementById('submitChangeBtn');
-  const explanationInput = document.getElementById('explanation');
-
-  // odblokuj przycisk dopiero gdy wybrano ocenę i wpisano tekst
-  const checkSubmit = () => {
-    submitBtn.disabled = !selectedNewGrade || !explanationInput.value.trim();
-  };
-
-  explanationInput.oninput = checkSubmit;
-
-  // anuluj
-  document.getElementById('cancelChangeBtn').onclick = () => closePopup();
-
-  // wyślij zgłoszenie
-  submitBtn.onclick = async () => {
-    const explanation = explanationInput.value.trim();
-
-    if (!selectedNewGrade) {
-      Swal.fire({ icon: 'warning', title: 'Wybierz nową ocenę' });
-      return;
-    }
-
-    if (!explanation) {
-      Swal.fire({ icon: 'warning', title: 'Podaj uzasadnienie zmiany' });
-      return;
-    }
-
-    try {
-      await post('/api/tickets', {
-        grade_id: item.grade_id,
-        new_grade: selectedNewGrade,
-        explanation: explanation
-      });
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Zgłoszenie wysłane',
-        text: 'Zmiana oceny została zgłoszona do akceptacji',
-        timer: 1800,
-        showConfirmButton: false
-      });
-
-      closePopup();
-      loadMyGrades(); // odśwież zakładkę
-    } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Błąd',
-        text: 'Nie udało się wysłać zgłoszenia\n' + (err.message || '')
-      });
-    }
-  };
-}
-
-// ──────────────────────────────────────────────────────
 // Popup szczegółów zgłoszenia (używany w Moich ocenach)
 // ──────────────────────────────────────────────────────
 async function showSubmissionDetailPopup(sub) {
   let fullSub = sub;
 
-  // jeśli sub jest niekompletny – pobieramy pełne dane
   if (!sub.about_me || !sub.subject_1_answer) {
     try {
       fullSub = await get(`/api/submissions/${sub.id}`);
@@ -387,19 +314,96 @@ async function showSubmissionDetailPopup(sub) {
     </div>
   `;
 
-  createBtn.style.display = 'none';
-  openPopup();
-
-  const closeHandler = () => {
-    createBtn.style.display = '';
-    closePopup();
-    document.getElementById('closeBtn')?.removeEventListener('click', closeHandler);
-  };
-  document.getElementById('closeBtn')?.addEventListener('click', closeHandler);
+  openCustomPopup();
 }
 
 // ──────────────────────────────────────────────────────
-// Inicjalizacja strony
+// Popup zgłoszenia zmiany oceny
+// ──────────────────────────────────────────────────────
+function showChangeGradePopup(item) {
+  popupTitle.innerHTML = `Zgłoś zmianę oceny dla zgłoszenia #${item.submission_number || item.submission_id}`;
+
+  popupContent.innerHTML = `
+    <div class="submission-detail">
+      <div class="detail-field">
+        <div class="field-label">Poprzednia ocena:</div>
+        <div class="field-value">${item.grade.toFixed(1)}</div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Nowa ocena:</div>
+        <div id="newGradeButtons" class="grade-buttons"></div>
+      </div>
+
+      <div class="detail-field">
+        <div class="field-label">Uzasadnienie zmiany (wymagane):</div>
+        <textarea id="explanation" rows="5" placeholder="Wpisz powód zmiany oceny..." style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd;"></textarea>
+      </div>
+    </div>
+
+    <div class="ticket-actions">
+      <button id="cancelChangeBtn" class="btn secondary">Anuluj</button>
+      <button id="submitChangeBtn" class="btn primary" disabled>Wyślij zgłoszenie</button>
+    </div>
+  `;
+
+  createGradeButtons('newGradeButtons');
+
+  const submitBtn = document.getElementById('submitChangeBtn');
+  const explanationInput = document.getElementById('explanation');
+
+  const checkSubmit = () => {
+    submitBtn.disabled = !selectedGrade || !explanationInput.value.trim();
+  };
+
+  explanationInput.oninput = checkSubmit;
+
+  document.getElementById('cancelChangeBtn').onclick = closeCustomPopup;
+
+  submitBtn.onclick = async () => {
+    const explanation = explanationInput.value.trim();
+
+    if (!selectedGrade) {
+      Swal.fire({ icon: 'warning', title: 'Wybierz nową ocenę' });
+      return;
+    }
+
+    if (!explanation) {
+      Swal.fire({ icon: 'warning', title: 'Podaj uzasadnienie zmiany' });
+      return;
+    }
+
+    try {
+      await post('/api/tickets', {
+        grade_id: item.grade_id,
+        new_grade: selectedGrade,
+        explanation: explanation
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Zgłoszenie wysłane',
+        text: 'Zmiana oceny została zgłoszona do akceptacji',
+        timer: 1800,
+        showConfirmButton: false
+      });
+
+      closeCustomPopup();
+      loadMyGrades();
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Błąd',
+        text: 'Nie udało się wysłać zgłoszenia\n' + (err.message || '')
+      });
+    }
+  };
+
+  openCustomPopup();
+}
+
+// ──────────────────────────────────────────────────────
+// Inicjalizacja
 // ──────────────────────────────────────────────────────
 createGradeButtons();
 
@@ -420,5 +424,5 @@ logoutBtn.onclick = async () => {
 getNextBtn.onclick = loadRandomSubmission;
 saveGradeBtn.onclick = saveGrade;
 
-// start – ładowanie pierwszego zgłoszenia do oceny
+// start
 loadRandomSubmission();
