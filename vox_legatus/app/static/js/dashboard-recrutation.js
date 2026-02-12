@@ -342,19 +342,19 @@ async function loadTickets(search = '') {
 
     tickets.forEach(ticket => {
       const statusText = {
-        waiting: 'Oczekuje',
-        approved: 'Zaakceptowane',
-        canceled: 'Anulowane'
+        Waiting: 'Oczekuje',
+        Approved: 'Zaakceptowane',
+        Canceled: 'Anulowane'
       }[ticket.status] || ticket.status;
 
       const statusClass = {
-        waiting: 'status-waiting',
-        approved: 'status-approved',
-        canceled: 'status-canceled'
+        Waiting: 'status-waiting',
+        Approved: 'status-approved',
+        Canceled: 'status-canceled'
       }[ticket.status] || '';
 
       const row = document.createElement('tr');
-      row.className = ticket.status === 'waiting' ? 'submission-row clickable' : 'submission-row';
+      row.className = ticket.status === 'Waiting' ? 'submission-row clickable' : 'submission-row';
       row.dataset.ticketId = ticket.ticket_id; // zapisujemy ID ticketu w data-
 
       row.innerHTML = `
@@ -461,7 +461,7 @@ async function showTicketDetailPopup(ticket) {
     </div>
 
     <div class="ticket-actions">
-      ${ticket.status === 'waiting' ? `
+      ${ticket.status === 'Waiting' ? `
         <button id="cancelTicketBtn" class="btn danger">Anuluj zgłoszenie</button>
         <button id="approveTicketBtn" class="btn primary">Zaakceptuj zmianę</button>
       ` : `
@@ -476,7 +476,7 @@ async function showTicketDetailPopup(ticket) {
   openPopup();  // ← jeśli używasz swojej funkcji openPopup
   console.log('Wywołano openPopup()');
   // Akcje tylko dla waiting
-  if (ticket.status === 'waiting') {
+  if (ticket.status === 'Waiting') {
     document.getElementById('cancelTicketBtn').onclick = async () => {
       if (!confirm('Na pewno anulować zgłoszenie zmiany?')) return;
       try {
