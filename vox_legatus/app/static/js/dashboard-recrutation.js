@@ -387,12 +387,14 @@ async function loadTickets(search = '') {
 }
 
 async function showTicketDetailPopup(ticket) {
+  try {
   popupTitle.innerHTML = `Zgłoszenie zmiany #${ticket.ticket_id || '?'}`;
-
+  console.log('Ustawiono tytuł');
   // Pobieramy pełne szczegóły zgłoszenia
   let sub = {};
   try {
     sub = await get(`/api/submissions/${ticket.submission_id}`);
+    console.log('Pobrano szczegóły zgłoszenia:', sub.submission_number);
   } catch (err) {
     console.warn('Nie udało się pobrać detali zgłoszenia', err);
   }
@@ -470,9 +472,9 @@ async function showTicketDetailPopup(ticket) {
       <button id="closeTicketBtn" class="btn secondary">Zamknij</button>
     </div>
   `;
-
+  console.log('Wypełniono popupContent');
   openPopup();  // ← jeśli używasz swojej funkcji openPopup
-
+  console.log('Wywołano openPopup()');
   // Akcje tylko dla waiting
   if (ticket.status === 'waiting') {
     document.getElementById('cancelTicketBtn').onclick = async () => {
@@ -501,6 +503,10 @@ async function showTicketDetailPopup(ticket) {
   }
 
   document.getElementById('closeTicketBtn').onclick = closePopup;
+  } catch (err) {
+  console.error('Błąd w showTicketDetailPopup:', err);
+    alert('Błąd otwarcia popupu: ' + err.message);
+  }
 }
 
 
