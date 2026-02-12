@@ -10,7 +10,6 @@ from app.recrutation.infrastructure.models.ticket import TicketModel
 class TicketRepo:
     async def create(self, session: AsyncSession, create_ticket: TicketCreate):
         ticket = TicketModel(
-            id=create_ticket.id,
             grade_id=create_ticket.grade_id,
             new_grade=create_ticket.new_grade,
             explanation=create_ticket.explanation
