@@ -10,7 +10,7 @@ function escapeHtml(unsafe) {
 }
 
 // ──────────────────────────────────────────────────────
-// Własna obsługa popupu (nie korzystamy z dashboard-popup.js)
+// Własna obsługa popupu
 // ──────────────────────────────────────────────────────
 function openCustomPopup() {
   const modal = document.getElementById('customPopupModal');
@@ -25,9 +25,18 @@ function closeCustomPopup() {
   if (modal) {
     modal.classList.add('hidden');
     modal.style.display = 'none';
-    // czyścimy zawartość po zamknięciu
     document.getElementById('popupTitle').innerHTML = '';
     document.getElementById('popupContent').innerHTML = '';
+  }
+}
+
+// uniwersalna funkcja do podpinania zamykania
+function setupPopupClose() {
+  const closeBtn = document.getElementById('closeBtn');
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      closeCustomPopup();
+    };
   }
 }
 
@@ -232,7 +241,6 @@ async function loadMyGrades(search = '') {
         </td>
       `;
 
-      // kliknięcie w wiersz (poza przyciskiem) → pokazuje szczegóły zgłoszenia
       row.addEventListener('click', async (e) => {
         if (e.target.classList.contains('change-grade-btn')) return;
 
@@ -248,7 +256,6 @@ async function loadMyGrades(search = '') {
         }
       });
 
-      // przycisk Zgłoś zmianę oceny
       row.querySelector('.change-grade-btn').onclick = (e) => {
         e.stopPropagation();
         showChangeGradePopup(item);
@@ -265,7 +272,7 @@ async function loadMyGrades(search = '') {
 }
 
 // ──────────────────────────────────────────────────────
-// Popup szczegółów zgłoszenia (używany w Moich ocenach)
+// Popup szczegółów zgłoszenia (tylko do odczytu)
 // ──────────────────────────────────────────────────────
 async function showSubmissionDetailPopup(sub) {
   let fullSub = sub;
@@ -312,9 +319,14 @@ async function showSubmissionDetailPopup(sub) {
         <div class="field-value long-text">${escapeHtml(fullSub.subject_2_answer || '—')}</div>
       </div>
     </div>
+
+    <div class="modal-actions">
+      <button id="closeBtn" class="btn secondary">Zamknij</button>
+    </div>
   `;
 
   openCustomPopup();
+  setupPopupClose(); // podpinamy zamykanie
 }
 
 // ──────────────────────────────────────────────────────
@@ -400,6 +412,7 @@ function showChangeGradePopup(item) {
   };
 
   openCustomPopup();
+  // NIE podpinamy closeBtn – bo w tym popupie go nie ma
 }
 
 // ──────────────────────────────────────────────────────
