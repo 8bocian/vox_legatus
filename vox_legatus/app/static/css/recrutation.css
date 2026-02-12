@@ -1,4 +1,4 @@
-/* recrutation-grader.css – dopracowana, responsywna wersja */
+/* recrutation-grader.css – ujednolicona wersja, spójna ze stylem oceniania */
 
 * {
   box-sizing: border-box;
@@ -13,7 +13,7 @@ body {
   line-height: 1.6;
 }
 
-/* Główny kontener – centrowany i ograniczony */
+/* Główny kontener */
 .mainContainer {
   max-width: 1100px;
   margin: 0 auto;
@@ -60,239 +60,7 @@ body {
   height: 26px;
 }
 
-/* Ukrywanie elementów */
-.hidden {
-  display: none !important;
-}
-
-/* Karta zgłoszenia */
-.submission {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  padding: clamp(1.5rem, 4vw, 2.5rem);
-  margin-bottom: 2rem;
-}
-
-#submissionTitle {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.4rem, 4.5vw, 1.8rem);
-}
-
-.group-label {
-  color: #555;
-  font-weight: 500;
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
-}
-
-/* Sekcje treści */
-.section {
-  margin-bottom: 2rem;
-}
-
-.section h3 {
-  color: #1976d2;
-  margin: 0 0 0.75rem;
-  font-size: 1.25rem;
-}
-
-.content-box,
-.topic {
-  background: #fafafa;
-  padding: 1.25rem 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.65;
-  font-size: 1.02rem;
-}
-
-/* Obszar oceniania */
-.grading-area {
-  margin-top: 2.5rem;
-  padding-top: 1.75rem;
-  border-top: 1px solid #eee;
-  text-align: center;
-}
-
-.grading-area h3 {
-  margin-bottom: 1.25rem;
-  color: #444;
-  font-size: 1.3rem;
-}
-
-.grade-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
-  gap: 12px;
-  max-width: 700px;
-  margin: 1.25rem auto 2rem;
-}
-
-.grade-btn {
-  aspect-ratio: 1 / 1;
-  border: 2px solid #d0d0d0;
-  border-radius: 10px;
-  background: white;
-  font-size: 1.15rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  color: #333;
-}
-
-.grade-btn:hover {
-  border-color: #1976d2;
-  background: #e8f4fd;
-  transform: translateY(-2px);
-}
-
-.grade-btn.selected {
-  background: #1976d2;
-  color: white;
-  border-color: #1976d2;
-  box-shadow: 0 4px 14px rgba(25, 118, 210, 0.25);
-}
-
-/* Przyciski akcji */
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 1.5rem;
-}
-
-.btn.primary,
-.btn.secondary {
-  padding: 0.9rem 2.2rem;
-  font-size: 1.05rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 160px;
-}
-
-.btn.primary {
-  background: #1976d2;
-  color: white;
-  border: none;
-}
-
-.btn.primary:hover:not(:disabled) {
-  background: #1565c0;
-  transform: translateY(-1px);
-}
-
-.btn.primary:disabled {
-  background: #a0a0a0;
-  cursor: not-allowed;
-}
-
-.btn.secondary {
-  background: #f0f0f0;
-  color: #444;
-  border: 1px solid #ccc;
-}
-
-.btn.secondary:hover {
-  background: #e0e0e0;
-}
-
-/* Komunikat braku zgłoszeń */
-.empty-message {
-  text-align: center;
-  padding: 6rem 1rem 4rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-}
-
-.empty-message p {
-  font-size: 1.25rem;
-  color: #555;
-  margin-bottom: 1.8rem;
-}
-
-/* Loading */
-.loading {
-  text-align: center;
-  font-size: 1.4rem;
-  color: #1976d2;
-  padding: 8rem 1rem;
-}
-
-/* ────────────────────────────────────────
-   RESPONSIVE – media queries
-──────────────────────────────────────── */
-
-@media (max-width: 768px) {
-  .mainContainer {
-    padding: 12px;
-  }
-
-  .header {
-    margin-bottom: 1.5rem;
-  }
-
-  .submission {
-    padding: 1.5rem;
-  }
-
-  .grade-buttons {
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
-  }
-
-  .grade-btn {
-    min-width: 48px;
-    height: 48px;
-    font-size: 1.05rem;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .btn.primary,
-  .btn.secondary {
-    width: 100%;
-    padding: 0.95rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .header h1 {
-    font-size: 1.6rem;
-  }
-
-  .btn {
-    width: 42px;
-    height: 42px;
-  }
-
-  .btn img {
-    width: 22px;
-    height: 22px;
-  }
-
-  .section h3 {
-    font-size: 1.15rem;
-  }
-
-  .content-box,
-  .topic {
-    padding: 1rem 1.2rem;
-    font-size: 0.97rem;
-  }
-
-  .grading-area h3 {
-    font-size: 1.2rem;
-  }
-}
+/* Tabs (zakładki) */
 .tabs {
   display: flex;
   gap: 12px;
@@ -311,23 +79,94 @@ body {
   color: #555;
 }
 
+.tab-btn:hover {
+  color: #1976d2;
+}
+
 .tab-btn.active {
   color: #1976d2;
   border-bottom: 3px solid #1976d2;
   font-weight: 600;
 }
 
+/* Zawartość zakładki */
 .tab-content {
   background: white;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  min-height: 400px;
 }
 
-#myGradesTab {
-  padding: 0;
+.tab-content.hidden {
+  display: none !important;
 }
 
+/* Wyszukiwarka (używana w obu zakładkach) */
+.search-container {
+  position: relative;
+  margin-bottom: 1.5rem;
+  max-width: 500px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: border-color 0.2s;
+}
+
+.search-container input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  pointer-events: none;
+}
+
+/* Tabela (używana w Moich ocenach i innych miejscach) */
+.submissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.submissions-table th,
+.submissions-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.submissions-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #444;
+}
+
+.submissions-table tr:hover {
+  background: #f5faff;
+}
+
+.submission-row.clickable {
+  cursor: pointer;
+}
+
+.grade-value {
+  font-weight: bold;
+  color: #1976d2;
+}
+
+/* Przycisk Zgłoś zmianę oceny */
 .change-grade-btn {
   background: #1976d2;
   color: white;
@@ -336,12 +175,14 @@ body {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.95em;
+  transition: all 0.2s;
 }
 
 .change-grade-btn:hover {
   background: #1565c0;
 }
 
+/* Popup (wspólny) */
 .modal {
   display: none;
   position: fixed;
@@ -371,4 +212,133 @@ body {
   justify-content: flex-end;
   gap: 16px;
   margin-top: 24px;
+}
+
+.btn.primary,
+.btn.secondary {
+  padding: 10px 20px;
+  font-size: 1em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn.primary {
+  background: #1976d2;
+  color: white;
+  border: none;
+}
+
+.btn.primary:hover {
+  background: #1565c0;
+}
+
+.btn.secondary {
+  background: #f0f0f0;
+  color: #444;
+  border: 1px solid #ccc;
+}
+
+.btn.secondary:hover {
+  background: #e0e0e0;
+}
+
+/* Sekcje w popupie */
+.submission-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-weight: 600;
+  color: #444;
+  font-size: 0.95em;
+}
+
+.field-value {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.55;
+}
+
+.long-text {
+  background: #fafafa;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+/* Komunikat braku danych / loading */
+.empty-message,
+.loading {
+  text-align: center;
+  padding: 6rem 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  color: #555;
+  font-size: 1.2rem;
+}
+
+.loading {
+  color: #1976d2;
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+  .mainContainer {
+    padding: 12px;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 0.95em;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn.primary,
+  .btn.secondary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.6rem;
+  }
+
+  .btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .btn img {
+    width: 22px;
+    height: 22px;
+  }
 }
