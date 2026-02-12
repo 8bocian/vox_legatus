@@ -17,6 +17,9 @@ from app.recrutation.presentation.schemas.ticket import TicketStatus
 from app.recrutation.infrastructure.repositories.grade_repository import GradeRepo
 from app.recrutation.presentation.schemas.ticket import TicketCreate
 
+from app.recrutation.infrastructure.repositories.grader_repository import GraderRepo
+from app.crud import user as user_crud
+
 router = APIRouter()
 
 @router.get("")
@@ -25,21 +28,26 @@ async def get_all(
         session: Annotated[AsyncSession, Depends(get_db)],
         ticket_repo: Annotated[TicketRepo, Depends()],
         submission_repo: Annotated[SubmissionRepo, Depends()],
-        grade_repo: Annotated[GradeRepo, Depends()]
+        grade_repo: Annotated[GradeRepo, Depends()],
+        grader_repo: Annotated[GraderRepo, Depends()]
 ) -> Sequence[TicketRead]:
     tickets = await ticket_repo.get_all(session)
     real_tickets: list[TicketRead] = []
     for ticket in tickets:
         grade = await grade_repo.get(session, ticket.grade_id)
+        grader = await grader_repo.get(session, grade.grader_id)
+        user = (await user_crud.get_user(session, user_id=grader.user_id))
         submission = await submission_repo.get(session, grade.submission_id)
         real_ticket = TicketRead(
-            id=ticket.id,
+            ticket_id=ticket.id,
             submission_id=submission.id,
             submission_number=submission.submission_number,
             grade_id=ticket.grade_id,
-            current_grade=grade.grade,
-            new_grade=ticket.new_grade,
+            previous_grade=grade.grade,
+            proposed_grade=ticket.new_grade,
             status=ticket.status,
+            requester_name=f"{user.name} {user.surname}",
+            explanation=ticket.explanation
         )
         real_tickets.append(real_ticket)
     return real_tickets

@@ -16,10 +16,12 @@ class TicketCreate(BaseModel):
 
 
 class TicketRead(BaseModel):
-    id: int
+    ticket_id: int
     submission_id: int
     submission_number: str
     grade_id: int
-    current_grade: float
-    new_grade: float
+    previous_grade: float
+    proposed_grade: float
     status: TicketStatus
+    requester_name: str
+    explanation: str
