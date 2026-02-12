@@ -1,4 +1,5 @@
 import { get, post, logout } from './api.js';
+import { openPopup, closePopup } from './dashboard-popup.js';
 
 function escapeHtml(unsafe) {
   return unsafe
