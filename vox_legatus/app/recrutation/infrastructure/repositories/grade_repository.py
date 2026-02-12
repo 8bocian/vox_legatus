@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Optional
 
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +7,10 @@ from app.recrutation.infrastructure.models.grade import GradeModel
 
 
 class GradeRepo:
+    async def get(self, session: AsyncSession, grade_id: int) -> Optional[GradeModel]:
+        grade = await session.get(GradeModel, grade_id)
+        return grade
+
     async def get_by_submission_id_grader_id(self, session: AsyncSession, submission_id: int, grader_id: int) -> GradeModel:
         grades_result = await session.execute(
             select(GradeModel).where(GradeModel.submission_id == submission_id).where(GradeModel.grader_id == grader_id)
