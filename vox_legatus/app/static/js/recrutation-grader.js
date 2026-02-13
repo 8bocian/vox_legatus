@@ -81,23 +81,33 @@ function createGradeButtons(containerId = 'gradeButtons') {
   if (!container) return;
 
   container.innerHTML = '';
-  for (let i = 0; i <= 12; i++) {
-    const val = (i * 0.5).toFixed(1);
+
+  const values = [0];
+
+  for (let v = 1; v <= 6; v += 0.5) {
+    values.push(v);
+  }
+
+  values.forEach(val => {
     const btn = document.createElement('button');
     btn.className = 'grade-btn';
-    btn.textContent = val;
+
+    // bez .0 dla liczb całkowitych
+    const display = Number.isInteger(val) ? val.toString() : val.toFixed(1);
+
+    btn.textContent = display;
     btn.dataset.value = val;
 
     btn.onclick = () => {
       container.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      selectedGrade = parseFloat(val);
+      selectedGrade = val;
       document.getElementById('saveGradeBtn')?.removeAttribute('disabled');
       document.getElementById('submitChangeBtn')?.removeAttribute('disabled');
     };
 
     container.appendChild(btn);
-  }
+  });
 }
 
 // ──────────────────────────────────────────────────────
