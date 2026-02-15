@@ -37,9 +37,9 @@ async def add_submissions(
             submission_number=str(row[SUBMISSIONS_MAPPING.submission_number]),
             about_me=str(row[SUBMISSIONS_MAPPING.about_me]),
             subject_1=str(row[SUBMISSIONS_MAPPING.subject_1]),
-            subject_2=str(row[SUBMISSIONS_MAPPING.subject_2]),
+            subject_2="",
             subject_1_answer=str(row[SUBMISSIONS_MAPPING.subject_1_answer]),
-            subject_2_answer=str(row[SUBMISSIONS_MAPPING.subject_2_answer])
+            subject_2_answer=""
         )
         await submission_repo.create(session, create_submission)
     return True
