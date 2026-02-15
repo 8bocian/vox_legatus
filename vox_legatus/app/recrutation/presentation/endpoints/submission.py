@@ -63,6 +63,9 @@ async def get_random(
     random_submission = await submission_repo.get_random_for_grader(session, grader.id)
     submissions_count = await submission_repo.get_submissions_count_for_group(session, grader.group_id)
     grades_count = await grade_repo.get_grades_count_for_grader(session, grader.id)
+    print(submissions_count)
+    print("##")
+    print(grades_count)
     if not random_submission:
         return []
 
