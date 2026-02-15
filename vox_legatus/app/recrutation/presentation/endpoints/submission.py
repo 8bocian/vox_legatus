@@ -51,18 +51,20 @@ async def get_random(
         session: Annotated[AsyncSession, Depends(get_db)],
         submission_repo: Annotated[SubmissionRepo, Depends()],
         grader_repo: Annotated[GraderRepo, Depends()],
+        grade_repo: Annotated[GradeRepo, Depends()],
 ) -> Optional[SubmissionGraderRead]:
     graders = await grader_repo.get_by_user_id(session, user.id)
     if len(graders) == 0:
-        return None
+        return []
     grader = graders[0]
     if not grader:
-        return None
+        return []
 
     random_submission = await submission_repo.get_random_for_grader(session, grader.id)
-
+    submissions_count = await submission_repo.get_submissions_count_for_group(session, grader.group_id)
+    grades_count = await grade_repo.get_grades_count_for_grader(session, grader.id)
     if not random_submission:
-        return None
+        return []
 
     return SubmissionGraderRead(
         id=random_submission.id,
@@ -71,7 +73,9 @@ async def get_random(
         subject_2=random_submission.subject_2,
         subject_1_answer=random_submission.subject_1_answer,
         subject_2_answer=random_submission.subject_2_answer,
-        already_graded=False
+        already_graded=False,
+        submissions_count=submissions_count,
+        grades_count=grades_count
     )
 
 

@@ -1,6 +1,6 @@
 from typing import Sequence, Optional
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.recrutation.infrastructure.models.grade import GradeModel
@@ -53,3 +53,13 @@ class GradeRepo:
     async def delete(self, session: AsyncSession, grade_id: int):
         grade = await session.get(GradeModel, grade_id)
         await session.delete(grade)
+
+    async def get_grades_count_for_grader(self, session: AsyncSession, grader_id: int) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(GradeModel)
+            .where(GradeModel.grader_id == grader_id)
+        )
+        result = await session.execute(stmt)
+        grades_count = result.scalar_one()
+        return grades_count

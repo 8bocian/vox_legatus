@@ -88,3 +88,14 @@ class SubmissionRepo:
 
     async def delete_all(self, session: AsyncSession):
         await session.execute(delete(SubmissionModel))
+
+
+    async def get_submissions_count_for_group(self, session: AsyncSession, group_id: int) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(SubmissionModel)
+            .where(SubmissionModel.group_id == group_id)
+        )
+        result = await session.execute(stmt)
+        submissions_count = result.scalar_one()
+        return submissions_count

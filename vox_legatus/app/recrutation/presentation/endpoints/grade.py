@@ -31,19 +31,21 @@ async def get_my(
         grader_repo: Annotated[GraderRepo, Depends()]
 ) -> Sequence[SingleSubmissionGradedRead]:
     graders = await grader_repo.get_by_user_id(session, user.id)
-    grader = graders[0]
-    grades = await grade_repo.get_for_grader(session, grader.id)
-    graded_submissions: list[SingleSubmissionGradedRead] = []
-    for grade in grades:
-        submission = await submission_repo.get(session, grade.submission_id)
-        graded_submission = SingleSubmissionGradedRead(
-            submission_id=submission.id,
-            submission_number=submission.submission_number,
-            subject_1=submission.subject_1,
-            subject_2=submission.subject_2,
-            grade_id=grade.id,
-            grade=grade.grade,
-        )
-        graded_submissions.append(graded_submission)
-    return graded_submissions
-
+    if len(graders):
+        grader = graders[0]
+        grades = await grade_repo.get_for_grader(session, grader.id)
+        graded_submissions: list[SingleSubmissionGradedRead] = []
+        for grade in grades:
+            submission = await submission_repo.get(session, grade.submission_id)
+            graded_submission = SingleSubmissionGradedRead(
+                submission_id=submission.id,
+                submission_number=submission.submission_number,
+                subject_1=submission.subject_1,
+                subject_2=submission.subject_2,
+                grade_id=grade.id,
+                grade=grade.grade,
+            )
+            graded_submissions.append(graded_submission)
+        return graded_submissions
+    else:
+        return []

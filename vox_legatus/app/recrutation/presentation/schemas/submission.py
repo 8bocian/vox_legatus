@@ -33,6 +33,8 @@ class SubmissionGraderRead(BaseModel):
     subject_1_answer: str
     subject_2_answer: str
     already_graded: bool
+    submissions_count: int
+    grades_count: int
 
 class SubmissionGradedRead(BaseModel):
     submission: SubmissionRead
