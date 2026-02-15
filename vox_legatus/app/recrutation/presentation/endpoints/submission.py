@@ -14,10 +14,12 @@ from app.recrutation.infrastructure.repositories.grade_repository import GradeRe
 from app.recrutation.infrastructure.repositories.grader_repository import GraderRepo
 from app.recrutation.infrastructure.repositories.grading_group_repository import GroupRepo
 from app.recrutation.infrastructure.repositories.submission_repository import SubmissionRepo
+from app.recrutation.infrastructure.repositories.ticket_repository import TicketRepo
 from app.recrutation.presentation.schemas.submission import SubmissionCreate, SubmissionRead, SubmissionGradeRequest
 from app.recrutation.presentation.schemas.grade import GradeRead
 from app.recrutation.presentation.schemas.submission import SubmissionGraderRead, SubmissionGradedRead
 from app.crud import user as user_crud
+
 
 router = APIRouter()
 
@@ -158,8 +160,10 @@ async def delete_all_submissions(
         user: Annotated[User, Depends(require_role([Role.ADMIN]))],
         session: Annotated[AsyncSession, Depends(get_db)],
         submission_repo: Annotated[SubmissionRepo, Depends()],
-        grade_repo: Annotated[GradeRepo, Depends()]
+        grade_repo: Annotated[GradeRepo, Depends()],
+        ticket_repo: Annotated[TicketRepo, Depends()],
 ):
+    await ticket_repo.delete_all(session)
     await grade_repo.delete_all(session)
     await submission_repo.delete_all(session)
 

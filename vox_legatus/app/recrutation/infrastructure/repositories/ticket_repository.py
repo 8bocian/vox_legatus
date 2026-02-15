@@ -32,3 +32,7 @@ class TicketRepo:
     async def change_status(self, session: AsyncSession, ticket_id: int, status: TicketStatus):
         ticket = await session.get(TicketModel, ticket_id)
         ticket.status = status
+
+    async def delete_all(self, session: AsyncSession):
+        await session.execute(delete(TicketModel))
+
