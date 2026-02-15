@@ -222,7 +222,7 @@ async function loadMyGrades(search = '') {
       <thead>
         <tr>
           <th>Nr zgłoszenia</th>
-          <th>Temat 1</th>
+          <th>Temat</th>
           <th>Twoja ocena</th>
           <th>Akcja</th>
         </tr>
@@ -306,12 +306,12 @@ async function showSubmissionDetailPopup(sub) {
       </div>
 
       <div class="detail-field">
-        <div class="field-label">Temat 1:</div>
+        <div class="field-label">Temat:</div>
         <div class="field-value">${escapeHtml(fullSub.subject_1 || '—')}</div>
       </div>
 
       <div class="detail-field">
-        <div class="field-label">Odpowiedź na temat 1:</div>
+        <div class="field-label">Odpowiedź:</div>
         <div class="field-value long-text">${escapeHtml(fullSub.subject_1_answer || '—')}</div>
       </div>
     </div>

@@ -417,7 +417,7 @@ async function showTicketDetailPopup(ticket) {
       </div>
 
       <div class="detail-field">
-        <div class="field-label">Temat 1:</div>
+        <div class="field-label">Temat:</div>
         <div class="field-value">${escapeHtml(sub.subject_1 || '—')}</div>
       </div>
 
@@ -533,8 +533,8 @@ async function loadSubmissions(search = '') {
         <tr>
           <th>Nr zgłoszenia</th>
           <th>O mnie</th>
-          <th>Temat 1</th>
-          <th>Odpowiedź 1</th>
+          <th>Temat</th>
+          <th>Odpowiedź</th>
           <th>Grupa</th>
         </tr>
       </thead>
@@ -589,12 +589,12 @@ function showSubmissionDetailPopup(sub) {
       </div>
 
       <div class="detail-field">
-        <div class="field-label">Temat 1:</div>
+        <div class="field-label">Temat:</div>
         <div class="field-value">${escapeHtml(sub.subject_1 || '—')}</div>
       </div>
 
       <div class="detail-field">
-        <div class="field-label">Odpowiedź na temat 1:</div>
+        <div class="field-label">Odpowiedź:</div>
         <div class="field-value long-text">${escapeHtml(sub.subject_1_answer || '—')}</div>
       </div>
 
