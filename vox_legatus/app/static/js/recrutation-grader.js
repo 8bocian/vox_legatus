@@ -139,8 +139,6 @@ async function loadRandomSubmission() {
     document.getElementById('aboutMe').textContent = data.about_me || '—';
     document.getElementById('subject1').textContent = data.subject_1 || '—';
     document.getElementById('answer1').textContent = data.subject_1_answer || '—';
-    document.getElementById('subject2').textContent = data.subject_2 || '—';
-    document.getElementById('answer2').textContent = data.subject_2_answer || '—';
 
     currentSubmission.classList.remove('hidden');
   } catch (err) {
@@ -226,7 +224,6 @@ async function loadMyGrades(search = '') {
         <tr>
           <th>Nr zgłoszenia</th>
           <th>Temat 1</th>
-          <th>Temat 2</th>
           <th>Twoja ocena</th>
           <th>Akcja</th>
         </tr>
@@ -244,9 +241,6 @@ async function loadMyGrades(search = '') {
         <td>${escapeHtml(item.submission_number || '-')}</td>
         <td title="${escapeHtml(item.subject_1 || '')}">
           ${escapeHtml(item.subject_1?.substring(0, 50) || '-')}${item.subject_1?.length > 50 ? '...' : ''}
-        </td>
-        <td title="${escapeHtml(item.subject_2 || '')}">
-          ${escapeHtml(item.subject_2?.substring(0, 50) || '-')}${item.subject_2?.length > 50 ? '...' : ''}
         </td>
         <td class="grade-value">${item.grade.toFixed(1)}</td>
         <td>
@@ -320,16 +314,6 @@ async function showSubmissionDetailPopup(sub) {
       <div class="detail-field">
         <div class="field-label">Odpowiedź na temat 1:</div>
         <div class="field-value long-text">${escapeHtml(fullSub.subject_1_answer || '—')}</div>
-      </div>
-
-      <div class="detail-field">
-        <div class="field-label">Temat 2:</div>
-        <div class="field-value">${escapeHtml(fullSub.subject_2 || '—')}</div>
-      </div>
-
-      <div class="detail-field">
-        <div class="field-label">Odpowiedź na temat 2:</div>
-        <div class="field-value long-text">${escapeHtml(fullSub.subject_2_answer || '—')}</div>
       </div>
     </div>
 

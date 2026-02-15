@@ -426,16 +426,6 @@ async function showTicketDetailPopup(ticket) {
         <div class="field-value long-text">${escapeHtml(sub.subject_1_answer || '—')}</div>
       </div>
 
-      <div class="detail-field">
-        <div class="field-label">Temat 2:</div>
-        <div class="field-value">${escapeHtml(sub.subject_2 || '—')}</div>
-      </div>
-
-      <div class="detail-field">
-        <div class="field-label">Odpowiedź:</div>
-        <div class="field-value long-text">${escapeHtml(sub.subject_2_answer || '—')}</div>
-      </div>
-
       <hr style="margin: 20px 0; border-color: #eee;">
 
       <h3>Zgłoszenie zmiany oceny</h3>
@@ -545,8 +535,6 @@ async function loadSubmissions(search = '') {
           <th>O mnie</th>
           <th>Temat 1</th>
           <th>Odpowiedź 1</th>
-          <th>Temat 2</th>
-          <th>Odpowiedź 2</th>
           <th>Grupa</th>
         </tr>
       </thead>
@@ -567,10 +555,6 @@ async function loadSubmissions(search = '') {
         <td>${escapeHtml(sub.subject_1 || '-')}</td>
         <td title="${escapeHtml(sub.subject_1_answer || '')}">
           ${escapeHtml(sub.subject_1_answer?.substring(0, 60) || '')}${sub.subject_1_answer?.length > 60 ? '...' : ''}
-        </td>
-        <td>${escapeHtml(sub.subject_2 || '-')}</td>
-        <td title="${escapeHtml(sub.subject_2_answer || '')}">
-          ${escapeHtml(sub.subject_2_answer?.substring(0, 60) || '')}${sub.subject_2_answer?.length > 60 ? '...' : ''}
         </td>
         <td>${sub.group_id ? `Grupa #${sub.group_id}` : '—'}</td>
       `;
@@ -615,16 +599,6 @@ function showSubmissionDetailPopup(sub) {
       </div>
 
       <div class="detail-field">
-        <div class="field-label">Temat 2:</div>
-        <div class="field-value">${escapeHtml(sub.subject_2 || '—')}</div>
-      </div>
-
-      <div class="detail-field">
-        <div class="field-label">Odpowiedź na temat 2:</div>
-        <div class="field-value long-text">${escapeHtml(sub.subject_2_answer || '—')}</div>
-      </div>
-
-      <div class="detail-field">
         <div class="field-label">Przypisana grupa:</div>
         <div class="field-value">${sub.group_id ? `Grupa #${sub.group_id}` : 'Nieprzypisane'}</div>
       </div>
@@ -654,7 +628,7 @@ function showUploadSubmissionsPopup() {
       <input type="file" id="submissionsFileInput" accept=".csv" />
     </div>
     <div style="margin-top: 12px; color: #666; font-size: 0.9em;">
-      Oczekiwany format: submission_number, about_me, subject_1, subject_2, subject_1_answer, subject_2_answer
+      Oczekiwany format: submission_number, about_me, subject_1, subject_1_answer
     </div>
   `;
 
