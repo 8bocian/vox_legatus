@@ -66,6 +66,8 @@ async def get_random(
     submissions_count = await submission_repo.get_submissions_count_for_group(session, grader.group_id)
     grades_count = await grade_repo.get_grades_count_for_grader(session, grader.id)
     grades_average = await grade_repo.get_average_grade_for_grader(session, grader.id)
+    if grades_average is None:
+        grades_average = 0
     print(submissions_count)
     print("##")
     print(grades_count)
