@@ -35,6 +35,7 @@ class SubmissionGraderRead(BaseModel):
     already_graded: bool
     submissions_count: int
     grades_count: int
+    grades_average: float
 
 class SubmissionGradedRead(BaseModel):
     submission: SubmissionRead

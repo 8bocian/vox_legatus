@@ -65,6 +65,7 @@ async def get_random(
     random_submission = await submission_repo.get_random_for_grader(session, grader.id)
     submissions_count = await submission_repo.get_submissions_count_for_group(session, grader.group_id)
     grades_count = await grade_repo.get_grades_count_for_grader(session, grader.id)
+    grades_average = await grade_repo.get_average_grade_for_grader(session, grader.id)
     print(submissions_count)
     print("##")
     print(grades_count)
@@ -80,7 +81,8 @@ async def get_random(
         subject_2_answer=random_submission.subject_2_answer,
         already_graded=False,
         submissions_count=submissions_count,
-        grades_count=grades_count
+        grades_count=grades_count,
+        grades_average=grades_average
     )
 
 

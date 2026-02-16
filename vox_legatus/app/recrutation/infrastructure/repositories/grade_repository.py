@@ -25,6 +25,17 @@ class GradeRepo:
         return grades_result.scalars().all()
 
 
+    async def get_average_grade_for_grader(self, session: AsyncSession, grader_id: int) -> Optional[float]:
+        result = await session.execute(
+            select(
+                func.round(func.avg(GradeModel.grade), 1)
+            )
+            .where(GradeModel.grader_id == grader_id)
+        )
+
+        avg = result.scalar()
+        return float(avg) if avg is not None else None
+
     async def change_grade(self, session: AsyncSession, grade_id: int, new_grade: float) -> int:
         grade = await session.get(GradeModel, grade_id)
         grade.grade = new_grade
