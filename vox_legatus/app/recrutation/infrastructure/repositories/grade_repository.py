@@ -28,7 +28,7 @@ class GradeRepo:
     async def get_average_grade_for_grader(self, session: AsyncSession, grader_id: int) -> Optional[float]:
         result = await session.execute(
             select(
-                func.round(func.avg(GradeModel.grade), 1)
+                func.avg(GradeModel.grade)
             )
             .where(GradeModel.grader_id == grader_id)
         )
