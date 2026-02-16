@@ -34,7 +34,7 @@ class SubmissionRepo:
                     SubmissionModel.subject_2.ilike(f"%{search}%")
                 )
             )
-            stmt = stmt.order_by(asc(SubmissionModel.submission_number))
+        stmt = stmt.order_by(asc(SubmissionModel.submission_number))
         submissions_results = await session.execute(stmt)
         submissions = submissions_results.scalars().all()
         return submissions
