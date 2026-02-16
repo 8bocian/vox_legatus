@@ -1,6 +1,6 @@
 from typing import Sequence, Optional
 
-from sqlalchemy import select, or_, func, and_, delete
+from sqlalchemy import select, or_, func, and_, delete, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.recrutation.infrastructure.models.submission import SubmissionModel
@@ -34,6 +34,7 @@ class SubmissionRepo:
                     SubmissionModel.subject_2.ilike(f"%{search}%")
                 )
             )
+            stmt = stmt.order_by(asc(SubmissionModel.submission_number))
         submissions_results = await session.execute(stmt)
         submissions = submissions_results.scalars().all()
         return submissions
