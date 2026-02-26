@@ -442,5 +442,17 @@ logoutBtn.onclick = async () => {
 getNextBtn.onclick = loadRandomSubmission;
 saveGradeBtn.onclick = saveGrade;
 
+const torpedaBtn = document.getElementById('torpedaBtn');
+
+if (torpedaBtn) {
+  torpedaBtn.onclick = () => {
+    Swal.fire({
+      icon: 'info',
+      title: 'Torpeda!',
+      text: 'Właśnie storpedowałeś czyjąś pracę! Losowy użytkownik stracił 20 ostatnich ocen!'
+    });
+  };
+}
+
 // start
 loadRandomSubmission();
