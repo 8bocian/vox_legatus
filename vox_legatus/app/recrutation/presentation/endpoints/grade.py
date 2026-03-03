@@ -46,6 +46,7 @@ async def get_my(
                 grade=grade.grade,
             )
             graded_submissions.append(graded_submission)
+        print(len(graded_submissions))
         return graded_submissions
     else:
         return []

@@ -39,6 +39,13 @@ class SubmissionRepo:
         submissions = submissions_results.scalars().all()
         return submissions
 
+    async def get_all_new(self, session: AsyncSession) -> Sequence[SubmissionModel]:
+        stmt = select(SubmissionModel).where(SubmissionModel.group_id.is_(None))
+        stmt = stmt.order_by(asc(func.cast(SubmissionModel.submission_number, Integer)))
+        submissions_results = await session.execute(stmt)
+        submissions = submissions_results.scalars().all()
+        return submissions
+
     async def get(self, session: AsyncSession, submission_id: int) -> Optional[SubmissionModel]:
         submission = await session.get(SubmissionModel, submission_id)
         return submission

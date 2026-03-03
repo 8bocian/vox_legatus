@@ -201,7 +201,6 @@ async def get_submission(
     )
 
 
-
 @router.post("/{submission_id}/grade")
 async def grade_submission(
         user: Annotated[User, Depends(require_role([Role.GRADER, Role.ADMIN]))],
@@ -225,6 +224,7 @@ async def grade_submission(
         await grade_repo.create(session, submission_id, grader.id, submission_grade.grade)
     return True
 
+
 @router.post("/assign")
 async def assign_submissions(
         admin: Annotated[User, Depends(require_role(Role.ADMIN))],
@@ -235,7 +235,7 @@ async def assign_submissions(
     grading_groups = await group_repo.get_filter(session)
     groups_n = len(grading_groups)
     if groups_n > 0:
-        submissions = await submission_repo.get_all(session)
+        submissions = await submission_repo.get_all_new(session)
         for idx, submission in enumerate(submissions):
             group_number = idx % groups_n
             group = grading_groups[group_number]
