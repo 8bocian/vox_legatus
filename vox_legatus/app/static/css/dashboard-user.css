@@ -12,11 +12,18 @@ body {
   justify-content: space-between;
 }
 
-#logoutBtn {
+.headerBtns {
+  display: flex;
+  align-items: center;
+}
+
+#logoutBtn,
+#changePasswordBtn {
   transition: transform 0.2s ease;
 }
 
-#logoutBtn:hover {
+#logoutBtn:hover,
+#changePasswordBtn:hover {
   transform: scale(1.2);
 }
 * {
