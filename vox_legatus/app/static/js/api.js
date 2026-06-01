@@ -71,6 +71,7 @@ async function put(endpoint, data) {
     method: 'PUT',
     headers: buildHeaders(),
     body: JSON.stringify(data),
+    credentials: 'include',
   });
 
   if (!response.ok) {

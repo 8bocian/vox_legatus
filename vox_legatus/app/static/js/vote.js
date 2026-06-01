@@ -1,4 +1,4 @@
-import { logout, get, post } from './api.js';
+import { logout, get, post, put } from './api.js';
 
 const newPollsContainer = document.getElementById('newPolls');
 const votedPollsContainer = document.getElementById('votedPolls');
@@ -7,6 +7,7 @@ const pollModal = document.getElementById('pollModal');
 const closeBtn = document.getElementById('closeBtn');
 const submitBtn = document.getElementById('submitBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const changePasswordBtn = document.getElementById('changePasswordBtn');
 
 const modalForm = document.getElementById('modalForm');
 const modalTitle = document.getElementById('modalTitle');
@@ -314,6 +315,60 @@ submitBtn.onclick = async (e) => {
     }
   });
 };
+
+function getUserId() {
+  const token = localStorage.getItem('access_token');
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return parseInt(payload.sub, 10);
+  } catch {
+    return null;
+  }
+}
+
+changePasswordBtn.onclick = async () => {
+  const { value: newPassword } = await Swal.fire({
+    title: 'Zmień hasło',
+    html: `
+      <input id="swal-new-password" type="password" class="swal2-input" placeholder="Nowe hasło" />
+      <input id="swal-confirm-password" type="password" class="swal2-input" placeholder="Powtórz hasło" />
+    `,
+    confirmButtonText: 'Zmień',
+    cancelButtonText: 'Anuluj',
+    showCancelButton: true,
+    focusConfirm: false,
+    preConfirm: () => {
+      const pw = document.getElementById('swal-new-password').value;
+      const confirm = document.getElementById('swal-confirm-password').value;
+      if (!pw) {
+        Swal.showValidationMessage('Hasło nie może być puste.');
+        return false;
+      }
+      if (pw !== confirm) {
+        Swal.showValidationMessage('Hasła nie są zgodne.');
+        return false;
+      }
+      return pw;
+    }
+  });
+
+  if (!newPassword) return;
+
+  const userId = getUserId();
+  if (!userId) {
+    Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie można odczytać danych użytkownika.', confirmButtonText: 'OK' });
+    return;
+  }
+
+  try {
+    await put(`/api/user/${userId}/password`, { password: newPassword });
+    Swal.fire({ icon: 'success', title: 'Sukces', text: 'Hasło zostało zmienione.', confirmButtonText: 'OK' });
+  } catch (err) {
+    Swal.fire({ icon: 'error', title: 'Błąd', text: 'Nie udało się zmienić hasła.', confirmButtonText: 'OK' });
+  }
+};
+
 loadPolls();
 
 function showPollResults(pollId) {

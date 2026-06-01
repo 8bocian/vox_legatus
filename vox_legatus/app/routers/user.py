@@ -95,6 +95,25 @@ async def update_user(
     updated_poll = (await user_crud.update_user(session, user_id, user))
     return updated_poll
 
+@router.put("/{user_id}/password", response_model=UserRead)
+async def update_password(
+        user_id: Annotated[int, Path()],
+        user: Annotated[UserUpdate, Body()],
+        session: Annotated[AsyncSession, Depends(get_db)],
+        current_user: User = Depends(require_role([Role.ADMIN, Role.USER]))
+):
+    if user_id != current_user.id:
+        raise HTTPException(status_code=401, detail="You can only change your password")
+    user_to_change = (await user_crud.get_user(session, user_id))
+
+    if not user_to_change:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.password:
+        user.password = hash_password(user.password)
+    updated_poll = (await user_crud.update_user(session, user_id, user))
+    return updated_poll
+
+
 @router.delete("/{user_id}", response_model=UserRead)
 async def delete_user(
         user_id: Annotated[int, Path()],
